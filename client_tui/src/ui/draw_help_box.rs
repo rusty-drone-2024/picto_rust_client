@@ -1,4 +1,5 @@
 use crate::state::ActiveComponent::*;
+use crate::state::TextEditAction::*;
 use crate::state::{NameSetAction, TUIState};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Style, Stylize};
@@ -51,6 +52,30 @@ pub(super) fn draw_help_box(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>
                     text.push_str("<Up|Down>: Navigate chats\n");
                     text.push_str("<Enter>  : Select chat\n");
                 }
+            }
+        }
+        ChatView => {
+            text.push_str("<C-Down> : Create text message\n");
+            text.push_str("<C-Left> : Go to chats\n");
+            if let Some(r_id) = state.ui_data.current_room {
+                let room = &state.chat_data.chat_rooms[r_id];
+                if let Some(l_id) = state.ui_data.current_log {
+                    let log = &room.chats[l_id];
+                    if !log.messages.is_empty() {
+                        text.push_str("<Up|Down>: Scroll chat\n");
+                        //TODO: determine if selected message is mine or not
+                    }
+                }
+            }
+        }
+        TextEdit(a) => {
+            text.push_str("<C-Up>   : Go to chat view\n");
+            if let Editing = a {
+                text.push_str("<C-Left> : Go to chats\n");
+                text.push_str("<C-Right>: Send button")
+            } else {
+                text.push_str("<C-Left  : Edit text message\n");
+                text.push_str("<Enter>  : Send message\n");
             }
         }
         _ => {}

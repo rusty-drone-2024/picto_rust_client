@@ -1,5 +1,6 @@
 use crate::state::ActiveComponent::*;
 use crate::state::{ChatLog, ChatMessage, ChatRoom, TUIState};
+use client_lib::communication::MessageContent::TextMessage;
 use client_lib::communication::TUICommand::*;
 use client_lib::communication::TUIEvent::ReadMessage;
 use client_lib::communication::{
@@ -10,8 +11,7 @@ use client_lib::ClientError;
 use client_lib::ClientError::{LockError, TUICommandHandlingError};
 use std::cell::{RefCell, RefMut};
 use std::net::TcpStream;
-use std::os::linux::raw::stat;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 
 pub(crate) fn backend_command_receiver(
     state: Arc<Mutex<RefCell<TUIState>>>,
@@ -149,7 +149,7 @@ fn handle_peer_name_update(
 
                     //TODO: set last seen to now
                     last_seen: 0,
-                    currently_creating: MessageContent::new(),
+                    currently_creating: TextMessage("".to_string()),
                     pending: 0,
                     net_reachable: true,
                 };

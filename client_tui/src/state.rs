@@ -79,7 +79,7 @@ pub(crate) enum ActiveComponent {
     RoomSelect,
     ChatSelect,
     ChatView,
-    MessageBuild,
+    TextEdit(TextEditAction),
     ReactionSend,
     NameSet(NameSetAction),
 }
@@ -87,6 +87,12 @@ pub(crate) enum ActiveComponent {
 pub(crate) enum NameSetAction {
     Displaying,
     ChangingName(String),
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum TextEditAction {
+    Editing,
+    ReadyToSend,
 }
 
 #[derive(Debug, Clone)]
@@ -109,7 +115,7 @@ pub(crate) struct UIData<'a> {
     pub selected_room: Option<usize>,
     pub current_log: Option<usize>,
     pub selected_log: Option<usize>,
-    pub message_in_edit: Option<&'a EditableContent>,
+    pub text_message_in_edit: String,
     pub reacting_to: Option<usize>,
     pub selected_reaction: Option<&'a Reaction>,
     pub name_in_editing: Option<String>,
@@ -128,7 +134,7 @@ impl TUIState<'_> {
                 selected_room: None,
                 current_log: None,
                 selected_log: None,
-                message_in_edit: None,
+                text_message_in_edit: "".to_string(),
                 reacting_to: None,
                 selected_reaction: None,
                 name_in_editing: None,

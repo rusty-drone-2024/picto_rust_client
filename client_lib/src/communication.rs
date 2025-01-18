@@ -41,7 +41,60 @@ pub enum TUIEvent {
     Kill,
 }
 
-pub type MessageContent = String;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MessageContent {
+    TextMessage(String),
+    Drawing(Drawing),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Drawing {
+    shapes: Vec<SerializableShape>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SerializableShape {
+    Rectangle(SerializableRectangle),
+    Circle(SerializableCircle),
+    Line(SerializableLine),
+    Point(SerializablePoint),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableRectangle {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub color: SerializableColor,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableCircle {
+    pub x: f64,
+    pub y: f64,
+    pub radius: f64,
+    pub color: SerializableColor,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableLine {
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
+    pub color: SerializableColor,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializablePoint {
+    pub x: f64,
+    pub y: f64,
+    pub color: SerializableColor,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TUICommand {

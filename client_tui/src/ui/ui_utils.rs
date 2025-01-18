@@ -1,12 +1,9 @@
 use crate::state::ActiveComponent;
 use crate::ui::{
-    CENTER_MAIN_H_SPLIT_MIN_WIDTH, INFO_HEIGHT, LEFT_MAIN_H_SPLIT_MIN_WIDTH,
-    MESSAGE_BUILDER_MIN_HEIGHT, NAME_SET_HEIGHT, RIGHT_MAIN_H_SPLIT_MIN_WIDTH,
+    CENTER_MAIN_H_SPLIT_MIN_WIDTH, INFO_HEIGHT, LEFT_MAIN_H_SPLIT_MIN_WIDTH, NAME_SET_HEIGHT,
+    RIGHT_MAIN_H_SPLIT_MIN_WIDTH, TEXT_EDIT_HEIGHT,
 };
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Style, Stylize};
-use ratatui::widgets::Block;
-use ratatui::widgets::BorderType::Rounded;
 use ratatui::Frame;
 use unicode_width::UnicodeWidthStr;
 
@@ -84,10 +81,7 @@ pub(crate) fn get_main_screen_rects(frame: &Frame) -> (Rect, Rect, Rect, Rect, R
         .split(main_h_split[0]);
     let right_v_split = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Fill(1),
-            Constraint::Length(MESSAGE_BUILDER_MIN_HEIGHT),
-        ])
+        .constraints([Constraint::Fill(1), Constraint::Length(TEXT_EDIT_HEIGHT)])
         .split(main_h_split[2]);
 
     (
