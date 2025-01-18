@@ -1,0 +1,8 @@
+[package]
+name = "main_app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+client = { path = "../client" }
+client_lib = { path = "../client_lib" }

@@ -1,0 +1,2 @@
+[workspace]
+members = ["main_app", "client", "client_tui", "client_lib"]

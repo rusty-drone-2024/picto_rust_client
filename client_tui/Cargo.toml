@@ -1,0 +1,11 @@
+[package]
+name = "client_tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ratatui = { version = "0.29.0", features = ["unstable-rendered-line-info"] }
+client_lib = { path = "../client_lib" }
+serde = { version = "1.0.217", features = ["derive"] }
+log = "0.4.22"
+unicode-width = "0.2.0"
