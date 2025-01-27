@@ -1,29 +1,42 @@
 use crate::state::ActiveComponent::TextEdit;
 use crate::state::TUIState;
-use crate::state::TextEditAction::*;
 use crate::ui::draw_alert::draw_alert;
-use ratatui::layout::Constraint::{Fill, Length};
-use ratatui::layout::Direction::{Horizontal, Vertical};
-use ratatui::layout::{Layout, Rect};
+use ratatui::layout::Rect;
 use ratatui::prelude::Style;
 use ratatui::style::Stylize;
-use ratatui::widgets::BorderType::{QuadrantInside, Rounded};
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::BorderType::Rounded;
+use ratatui::widgets::{Block, Paragraph, Wrap};
 use ratatui::Frame;
 use std::cell::Ref;
 
 pub(super) fn draw_text_edit(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>) {
-    if let Some(l_id) = state.ui_data.current_log {
-        let editor_rect = Rect::new(rect.x, rect.y, 42, rect.height);
-        let send_button_rect = Rect::new(rect.x + 42, rect.y, rect.width - 42, rect.height);
-        draw_text_area(frame, editor_rect, state);
-        draw_send_button(frame, send_button_rect, state);
+    let border_style = if let TextEdit = state.ui_data.active_component {
+        Style::new().green()
     } else {
-        let border_style = if let TextEdit(_) = state.ui_data.active_component {
-            Style::new().green()
+        Style::new()
+    };
+
+    if let Some(l_id) = state.ui_data.current_log {
+        let text = state.ui_data.text_message_in_edit.clone();
+        let text_clone = text.clone();
+
+        let mut editor = Paragraph::new(text).wrap(Wrap { trim: false }).block(
+            Block::bordered()
+                .border_type(Rounded)
+                .border_style(border_style)
+                .title("Write something!"),
+        );
+
+        let line_count = if !text_clone.is_empty() {
+            editor.line_count(rect.width - 2) - 3
         } else {
-            Style::new()
+            0
         };
+        let overflow = if line_count > 4 { line_count - 4 } else { 0 };
+        editor = editor.scroll((overflow as u16, 0));
+
+        frame.render_widget(editor, rect);
+    } else {
         frame.render_widget(
             Block::bordered()
                 .border_type(Rounded)
@@ -33,52 +46,4 @@ pub(super) fn draw_text_edit(frame: &mut Frame, rect: Rect, state: &Ref<TUIState
         );
         draw_alert(frame, rect, "Select a friend first!");
     }
-}
-
-fn draw_text_area(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>) {
-    let border_style = match state.ui_data.active_component {
-        TextEdit(Editing) => Style::new().green(),
-        _ => Style::new(),
-    };
-
-    let text = state.ui_data.text_message_in_edit.clone();
-    let text_len = text.len();
-
-    let editor = Paragraph::new(text).block(
-        Block::new()
-            .border_type(Rounded)
-            .border_style(border_style)
-            .borders(Borders::LEFT | Borders::TOP | Borders::BOTTOM)
-            .title(format!("Write something: {}/200", text_len)),
-    );
-    frame.render_widget(editor, rect);
-}
-
-fn draw_send_button(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>) {
-    let border_style = match state.ui_data.active_component {
-        TextEdit(ReadyToSend) => Style::new().green(),
-        _ => Style::new(),
-    };
-    let button_inner_style = match state.ui_data.active_component {
-        TextEdit(ReadyToSend) => Style::new().dark_gray().on_green(),
-        _ => Style::new().dark_gray().on_white(),
-    };
-    let send_button_rect_h_split = Layout::default()
-        .direction(Horizontal)
-        .constraints([Fill(1), Length(4), Fill(1)])
-        .split(rect);
-    let send_button_rect_v_split = Layout::default()
-        .direction(Vertical)
-        .constraints([Fill(1), Length(1), Fill(1)])
-        .split(send_button_rect_h_split[1]);
-    let send_button_paragraph = Paragraph::new("Send").style(button_inner_style);
-
-    let send_button = Block::bordered()
-        .border_style(border_style)
-        .border_type(QuadrantInside);
-    let send_button_inner = Block::new().style(button_inner_style);
-    let send_button_inner_rect = Rect::new(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2);
-    frame.render_widget(send_button, rect);
-    frame.render_widget(send_button_inner, send_button_inner_rect);
-    frame.render_widget(send_button_paragraph, send_button_rect_v_split[1]);
 }

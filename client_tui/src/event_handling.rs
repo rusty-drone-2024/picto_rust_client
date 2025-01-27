@@ -1,10 +1,12 @@
 use crate::state::ActiveComponent::*;
 use crate::state::NameSetAction::*;
-use crate::state::TUIState;
-use crate::state::TextEditAction::*;
-use client_lib::communication::send_message;
-use client_lib::communication::TUIEvent::RegisterToServer;
+use crate::state::{ChatMessage, TUIState};
+use client_lib::communication::MessageContent::TextMessage;
+use client_lib::communication::MessageStatus::SentToServer;
+use client_lib::communication::TUIEvent::{RegisterToServer, SendMessage};
+use client_lib::communication::{send_message, ChatClientID, ChatServerID};
 use client_lib::ClientError;
+use rand::Rng;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use std::cell::RefMut;
@@ -25,8 +27,7 @@ pub(super) fn handle_event(
         RoomSelect => handle_room_select_event(stream, &mut state, event)?,
         ChatSelect => handle_chat_select_event(stream, &mut state, event)?,
         ChatView => handle_chat_view_event(stream, &mut state, event)?,
-        TextEdit(Editing) => handle_text_area_event(stream, &mut state, event)?,
-        TextEdit(ReadyToSend) => handle_text_send_button_event(stream, &mut state, event)?,
+        TextEdit => handle_text_area_event(stream, &mut state, event)?,
         _ => {}
     }
     Ok(())
@@ -192,6 +193,7 @@ fn handle_text_area_event(
     state: &mut RefMut<TUIState>,
     event: Event,
 ) -> Result<(), ClientError> {
+    let text = &mut state.ui_data.text_message_in_edit;
     if let Event::Key(key) = event {
         if key.kind == event::KeyEventKind::Release {
             return Ok(());
@@ -204,54 +206,47 @@ fn handle_text_area_event(
                 KeyCode::Up => {
                     go_to_chat_view(state);
                 }
-                KeyCode::Right => {
-                    go_to_text_send_button(state);
+                _ => {}
+            }
+        } else if key.modifiers.contains(KeyModifiers::SHIFT) {
+            match key.code {
+                KeyCode::Enter => {
+                    if !text.is_empty() {
+                        let lines: Vec<&str> = text.split("\n").collect();
+                        let last_line = lines.last().unwrap();
+                        if !last_line.is_empty() {
+                            text.push('\n');
+                        }
+                    }
+                }
+                KeyCode::Char(c) => {
+                    text.push(c);
                 }
                 _ => {}
             }
         } else {
             match key.code {
+                KeyCode::Char(c) => {
+                    text.push(c);
+                }
+                KeyCode::Backspace => {
+                    if !text.is_empty() {
+                        text.pop();
+                    }
+                }
+                KeyCode::Enter => {
+                    send_current_text_message(stream, state)?;
+                }
                 _ => {}
             }
         }
     }
-    Ok(())
-}
 
-fn handle_text_send_button_event(
-    stream: &mut TcpStream,
-    state: &mut RefMut<TUIState>,
-    event: Event,
-) -> Result<(), ClientError> {
-    if let Event::Key(key) = event {
-        if key.kind == event::KeyEventKind::Release {
-            return Ok(());
-        }
-        if key.modifiers.contains(KeyModifiers::CONTROL) {
-            match key.code {
-                KeyCode::Left => {
-                    go_to_text_area(state);
-                }
-                KeyCode::Up => {
-                    go_to_chat_view(state);
-                }
-                _ => {}
-            }
-        } else {
-            match key.code {
-                _ => {}
-            }
-        }
-    }
     Ok(())
 }
 
 fn go_to_text_area(state: &mut RefMut<TUIState>) {
-    state.ui_data.active_component = TextEdit(Editing);
-}
-
-fn go_to_text_send_button(state: &mut RefMut<TUIState>) {
-    state.ui_data.active_component = TextEdit(ReadyToSend);
+    state.ui_data.active_component = TextEdit;
 }
 
 fn go_to_room_select(state: &mut RefMut<TUIState>) {
@@ -329,4 +324,59 @@ fn read_log(state: &mut RefMut<TUIState>, room_id: usize, log_id: usize) {
     let log = &mut room.chats[log_id];
     room.pending -= log.pending;
     log.pending = 0;
+}
+
+fn send_current_text_message(
+    stream: &mut TcpStream,
+    state: &mut RefMut<TUIState>,
+) -> Result<(), ClientError> {
+    if let Some(room_pos) = state.ui_data.current_room {
+        if let Some(log_pos) = state.ui_data.current_log {
+            let room = &state.chat_data.chat_rooms[room_pos];
+            let log = &room.chats[log_pos];
+            let room_id = room.id;
+            let log_id = log.id;
+            let mut rng = rand::thread_rng();
+            let msg_id = rng.gen();
+            let mut msg = state.ui_data.text_message_in_edit.clone();
+            let mut cleaned = false;
+            while !cleaned {
+                if let Some(c) = msg.chars().last() {
+                    if c == '\n' || c == ' ' {
+                        msg.pop();
+                    } else {
+                        cleaned = true;
+                    }
+                } else {
+                    cleaned = true;
+                }
+            }
+            if !msg.is_empty() {
+                let content = TextMessage(msg);
+                send_message(
+                    stream,
+                    SendMessage(
+                        room_id as ChatServerID,
+                        log_id as ChatClientID,
+                        msg_id,
+                        content.clone(),
+                    ),
+                )?;
+                state.chat_data.chat_rooms[room_pos].chats[log_pos]
+                    .messages
+                    .push(ChatMessage {
+                        id: msg_id,
+                        content: Some(content),
+                        //TODO set to now
+                        timestamp: 0,
+                        status: Some(SentToServer),
+                        reaction: None,
+                        edited: false,
+                        deleted: false,
+                    });
+                state.ui_data.text_message_in_edit = "".to_string();
+            }
+        }
+    }
+    Ok(())
 }

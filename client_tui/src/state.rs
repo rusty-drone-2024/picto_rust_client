@@ -79,7 +79,7 @@ pub(crate) enum ActiveComponent {
     RoomSelect,
     ChatSelect,
     ChatView,
-    TextEdit(TextEditAction),
+    TextEdit,
     ReactionSend,
     NameSet(NameSetAction),
 }
@@ -87,12 +87,6 @@ pub(crate) enum ActiveComponent {
 pub(crate) enum NameSetAction {
     Displaying,
     ChangingName(String),
-}
-
-#[derive(Debug, Clone)]
-pub(crate) enum TextEditAction {
-    Editing,
-    ReadyToSend,
 }
 
 #[derive(Debug, Clone)]

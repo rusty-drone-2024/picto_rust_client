@@ -1,3 +1,4 @@
+mod chat_scroll_view;
 mod draw_alert;
 mod draw_chat_select;
 mod draw_chat_view;
@@ -5,7 +6,7 @@ mod draw_help_box;
 mod draw_name_set;
 mod draw_room_select;
 mod draw_text_edit;
-mod ui_utils;
+pub(crate) mod ui_utils;
 
 use crate::state::{ActiveComponent, TUIState};
 use crate::ui::draw_alert::draw_alert;
@@ -38,7 +39,7 @@ const CENTER_MAIN_H_SPLIT_MIN_HEIGHT: u16 = 15;
 const TEXT_EDIT_HEIGHT: u16 = 7;
 const CHAT_MIN_HEIGHT: u16 = 20;
 
-const RIGHT_MAIN_H_SPLIT_MIN_WIDTH: u16 = 48;
+const RIGHT_MAIN_H_SPLIT_MIN_WIDTH: u16 = 42;
 const RIGHT_MAIN_H_SPLIT_MIN_HEIGHT: u16 = TEXT_EDIT_HEIGHT + CHAT_MIN_HEIGHT;
 
 //total

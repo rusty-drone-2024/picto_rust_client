@@ -1,5 +1,4 @@
 use crate::state::ActiveComponent::*;
-use crate::state::TextEditAction::*;
 use crate::state::{NameSetAction, TUIState};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Style, Stylize};
@@ -68,15 +67,12 @@ pub(super) fn draw_help_box(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>
                 }
             }
         }
-        TextEdit(a) => {
+        TextEdit => {
+            text.push_str("Write your message!\n");
             text.push_str("<C-Up>   : Go to chat view\n");
-            if let Editing = a {
-                text.push_str("<C-Left> : Go to chats\n");
-                text.push_str("<C-Right>: Send button")
-            } else {
-                text.push_str("<C-Left  : Edit text message\n");
-                text.push_str("<Enter>  : Send message\n");
-            }
+            text.push_str("<C-Left> : Go to chats\n");
+            text.push_str("<S-Enter>: New Line\n");
+            text.push_str("<Enter>  : Send message\n");
         }
         _ => {}
     }

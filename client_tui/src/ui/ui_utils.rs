@@ -29,38 +29,6 @@ pub(super) fn centered_percent_rect(percent_x: u16, percent_y: u16, r: Rect) -> 
         .split(v_split[1])[1] // Return the middle chunk
 }
 
-//TODO: does not work when splitting words.
-pub(super) fn get_witdht_constrained_string_height(text: &str, width: u16) -> u16 {
-    let width = width - 2;
-    let lines: Vec<&str> = text.split("\n").collect();
-    let mut line_count = 0;
-
-    for line in lines {
-        line_count += 1;
-        let mut current_line_width = 0;
-        let line_words: Vec<&str> = line.split(" ").collect();
-        for word in line_words {
-            let word_width = UnicodeWidthStr::width(word);
-
-            // Check if adding this word (plus a space) would exceed the width
-            let mut line_width_plus_next_word = current_line_width + 1 + word_width;
-            if current_line_width == 0 {
-                line_width_plus_next_word = word_width;
-            }
-
-            if line_width_plus_next_word > width as usize {
-                // Start a new line
-                line_count += 1;
-                current_line_width = word_width;
-            } else {
-                // Add word to current line (plus space)
-                current_line_width += 1 + word_width;
-            }
-        }
-    }
-
-    line_count
-}
 pub(crate) fn get_main_screen_rects(frame: &Frame) -> (Rect, Rect, Rect, Rect, Rect, Rect) {
     let area = frame.area();
     let main_h_split = Layout::default()

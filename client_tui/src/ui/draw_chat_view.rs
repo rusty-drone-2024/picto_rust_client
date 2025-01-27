@@ -1,5 +1,6 @@
 use crate::state::ActiveComponent::*;
 use crate::state::TUIState;
+use crate::ui::chat_scroll_view::ChatScrollView;
 use crate::ui::draw_alert::draw_alert;
 use ratatui::layout::Rect;
 use ratatui::prelude::Style;
@@ -8,6 +9,7 @@ use ratatui::widgets::Block;
 use ratatui::widgets::BorderType::Rounded;
 use ratatui::Frame;
 use std::cell::Ref;
+use tui_scrollview::ScrollViewState;
 
 pub(super) fn draw_chat_view(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>) {
     let border_style = if let ChatView = state.ui_data.active_component {
@@ -20,14 +22,18 @@ pub(super) fn draw_chat_view(frame: &mut Frame, rect: Rect, state: &Ref<TUIState
         if let Some(r_id) = state.ui_data.current_room {
             let curr_room = &state.chat_data.chat_rooms[r_id];
             let curr_log = &curr_room.chats[l_id];
+            let mut chat_scroll_view = ChatScrollView {
+                messages: &curr_log.messages,
+                scroll_view_state: ScrollViewState::default(),
+            };
+            let inner = Rect::new(rect.x + 1, rect.y + 1, rect.width - 1, rect.height - 2);
             frame.render_widget(
                 Block::bordered()
-                    .border_type(Rounded)
                     .border_style(border_style)
-                    .title(format!("{}", curr_log.peer_name))
-                    .style(Style::new()),
+                    .border_type(Rounded),
                 rect,
             );
+            frame.render_widget(&mut chat_scroll_view, inner);
         }
     } else {
         frame.render_widget(

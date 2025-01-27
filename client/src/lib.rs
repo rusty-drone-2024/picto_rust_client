@@ -43,11 +43,27 @@ pub fn run() -> Result<(), ClientError> {
             UpdateChatRoom(i, Some(i % 3 != 0), Some(i % 4 != 0)),
         )?;
     }
+    send_message(&mut stream, UpdatePeerName(1, 0, "Gioacchino".to_string()))?;
+    send_message(
+        &mut stream,
+        UpdateMessageContent(1, 0, 0, TextMessage(format!("You have no idea how much time I spent implementing this fucking responsive message layout").to_string())),
+    )?;
+    send_message(
+        &mut stream,
+        UpdateMessageContent(
+            1,
+            0,
+            1,
+            TextMessage(
+                format!("But it was worth it now that it is as smooth as butter").to_string(),
+            ),
+        ),
+    )?;
     send_message(&mut stream, UpdatePeerName(1, 1, "Gabry".to_string()))?;
     for i in 0..5 {
         send_message(
             &mut stream,
-            UpdateMessageContent(1, 1, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(1, 1, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
 
@@ -55,49 +71,49 @@ pub fn run() -> Result<(), ClientError> {
     for i in 0..8 {
         send_message(
             &mut stream,
-            UpdateMessageContent(1, 2, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(1, 2, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(1, 3, "Ace".to_string()))?;
     for i in 0..15 {
         send_message(
             &mut stream,
-            UpdateMessageContent(1, 3, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(1, 3, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(1, 4, "Marco".to_string()))?;
     for i in 0..2 {
         send_message(
             &mut stream,
-            UpdateMessageContent(1, 4, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(1, 4, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(2, 1, "Marty".to_string()))?;
     for i in 0..3 {
         send_message(
             &mut stream,
-            UpdateMessageContent(2, 1, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(2, 1, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(4, 1, "Roger".to_string()))?;
     for i in 0..12 {
         send_message(
             &mut stream,
-            UpdateMessageContent(4, 1, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(4, 1, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(4, 2, "Laura".to_string()))?;
     for i in 0..7 {
         send_message(
             &mut stream,
-            UpdateMessageContent(4, 2, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(4, 2, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
     send_message(&mut stream, UpdatePeerName(8, 1, "Bianca".to_string()))?;
     for i in 0..20 {
         send_message(
             &mut stream,
-            UpdateMessageContent(8, 1, i, TextMessage("Test".to_string())),
+            UpdateMessageContent(8, 1, i, TextMessage(format!("Test {}", i).to_string())),
         )?;
     }
 
