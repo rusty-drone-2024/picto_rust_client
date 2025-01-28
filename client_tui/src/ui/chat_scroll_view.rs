@@ -1,13 +1,13 @@
 use crate::state::ChatMessage;
-use crate::ui::RIGHT_MAIN_H_SPLIT_MIN_WIDTH;
 use client_lib::communication::MessageContent::*;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Constraint::{Fill, Length, Percentage};
+use ratatui::crossterm::style::Colored::BackgroundColor;
+use ratatui::layout::Constraint::{Fill, Length};
 use ratatui::layout::{Layout, Position, Rect, Size};
 use ratatui::prelude::StatefulWidget;
+use ratatui::style::{Style, Stylize};
 use ratatui::widgets::BorderType::Rounded;
 use ratatui::widgets::{Block, Paragraph, Widget, Wrap};
-use serde::de::IntoDeserializer;
 use std::cell::RefMut;
 use tui_scrollview::ScrollbarVisibility::{Always, Never};
 use tui_scrollview::{ScrollView, ScrollViewState};
@@ -17,6 +17,7 @@ pub(crate) struct ChatScrollView<'a> {
     pub(crate) messages: &'a Vec<ChatMessage>,
     pub(crate) scroll_view_state: RefMut<'a, ScrollViewState>,
     pub(crate) go_to_chat_bottom: RefMut<'a, bool>,
+    pub(crate) selected_message: RefMut<'a, Option<usize>>,
 }
 
 impl<'a> ChatScrollView<'a> {
@@ -24,8 +25,8 @@ impl<'a> ChatScrollView<'a> {
         let area = buf.area;
         let mut current_height = 0;
         let line_w = area.width - 2;
-        for m in self.messages {
-            let p = self.message(m);
+        for (i, m) in self.messages.iter().enumerate() {
+            let p = self.message(m, i);
             let msg_w = Self::get_msg_width(m, line_w);
             let h = p.line_count(msg_w - 2) as u16;
             let rect = Rect::new(area.x, current_height, line_w, h);
@@ -60,8 +61,8 @@ impl<'a> ChatScrollView<'a> {
     fn get_height(&self, w: u16) -> u16 {
         let mut current_height = 0;
         let line_w = w - 2;
-        for m in self.messages {
-            let p = self.message(m);
+        for (i, m) in self.messages.iter().enumerate() {
+            let p = self.message(m, i);
             let msg_w = Self::get_msg_width(m, line_w);
             let h = p.line_count(msg_w - 2) as u16;
             current_height += h;
@@ -69,21 +70,39 @@ impl<'a> ChatScrollView<'a> {
         current_height
     }
 
-    fn message(&self, m: &ChatMessage) -> Paragraph {
+    fn message(&self, m: &ChatMessage, id: usize) -> Paragraph {
+        let mut border_style = Style::default();
+        if let Some(sm) = *self.selected_message {
+            if sm == id {
+                border_style = Style::new().green();
+            }
+        }
         let mc = &m.content;
         if let Some(mci) = mc {
             return if let TextMessage(s) = mci {
                 Paragraph::new(s.clone())
-                    .block(Block::bordered().border_type(Rounded))
+                    .block(
+                        Block::bordered()
+                            .border_type(Rounded)
+                            .border_style(border_style),
+                    )
                     .wrap(Wrap { trim: false })
             } else {
                 Paragraph::new("Disegno")
-                    .block(Block::bordered().border_type(Rounded))
+                    .block(
+                        Block::bordered()
+                            .border_type(Rounded)
+                            .border_style(border_style),
+                    )
                     .wrap(Wrap { trim: false })
             };
         }
         Paragraph::new("Messaggio eliminato")
-            .block(Block::bordered().border_type(Rounded))
+            .block(
+                Block::bordered()
+                    .border_type(Rounded)
+                    .border_style(border_style),
+            )
             .wrap(Wrap { trim: false })
     }
 }

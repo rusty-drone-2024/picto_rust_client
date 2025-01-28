@@ -3,7 +3,7 @@ use crate::state::NameSetAction::*;
 use crate::state::{ChatMessage, TUIState};
 use client_lib::communication::MessageContent::TextMessage;
 use client_lib::communication::MessageStatus::SentToServer;
-use client_lib::communication::TUIEvent::{RegisterToServer, SendMessage};
+use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SendMessage};
 use client_lib::communication::{send_message, ChatClientID, ChatServerID};
 use client_lib::ClientError;
 use rand::Rng;
@@ -11,6 +11,7 @@ use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use std::cell::RefMut;
 use std::net::TcpStream;
+use std::os::linux::raw::stat;
 
 pub(super) fn handle_event(
     stream: &mut TcpStream,
@@ -98,6 +99,9 @@ fn handle_room_select_event(
                             if let Some(curr_room_id) = &state.ui_data.current_room {
                                 if r_id != *curr_room_id {
                                     state.ui_data.current_log = None;
+                                    let mut selected_message =
+                                        state.ui_data.selected_message.borrow_mut();
+                                    *selected_message = None;
                                 }
                             }
                             state.ui_data.current_room = Some(r_id);
@@ -153,13 +157,20 @@ fn handle_chat_select_event(
                         if let Some(c_id) = state.ui_data.current_log {
                             if l_id != c_id {
                                 *go_to_chat_bottom = true;
+                                drop(go_to_chat_bottom);
+                                state.ui_data.current_log = Some(l_id);
+                                select_last_message(state)?;
+                            } else {
+                                drop(go_to_chat_bottom);
                             }
                         } else {
                             *go_to_chat_bottom = true;
+                            drop(go_to_chat_bottom);
+                            state.ui_data.current_log = Some(l_id);
+                            select_last_message(state)?;
                         }
-                        drop(go_to_chat_bottom);
-                        state.ui_data.current_log = Some(l_id);
 
+                        //state.ui_data.current_log = Some(l_id);
                         go_to_chat_view(state);
                     }
                 }
@@ -189,6 +200,20 @@ fn handle_chat_view_event(
                 }
                 _ => {}
             }
+        } else if key.modifiers.contains(KeyModifiers::SHIFT) {
+            match key.code {
+                KeyCode::Up => {
+                    message_select_go_up(state);
+                }
+
+                KeyCode::Down => {
+                    message_select_go_down(state);
+                }
+                KeyCode::Char('d') => {
+                    delete_selected_message(stream, state)?;
+                }
+                _ => {}
+            }
         } else {
             match key.code {
                 KeyCode::Up => {
@@ -196,6 +221,9 @@ fn handle_chat_view_event(
                 }
                 KeyCode::Down => {
                     state.ui_data.scroll_view_state.borrow_mut().scroll_down();
+                }
+                KeyCode::Char('d') => {
+                    delete_selected_message(stream, state)?;
                 }
                 _ => {}
             }
@@ -224,6 +252,7 @@ fn handle_text_area_event(
                 }
                 KeyCode::Char('s') => {
                     send_current_text_message(stream, state)?;
+                    select_last_message(state)?;
                 }
                 _ => {}
             }
@@ -318,11 +347,35 @@ fn chat_select_go_up(state: &mut RefMut<TUIState>) {
 }
 
 fn chat_select_go_down(state: &mut RefMut<TUIState>) {
-    if let Some(id) = state.ui_data.selected_log {
-        if let Some(r_id) = state.ui_data.current_room {
-            let room = &state.chat_data.chat_rooms[r_id];
+    if let Some(r_id) = state.ui_data.current_room {
+        let room = &state.chat_data.chat_rooms[r_id];
+        if let Some(id) = state.ui_data.selected_log {
             if id < room.chats.len() - 1 {
                 state.ui_data.selected_log = Some(id + 1);
+            }
+        }
+    }
+}
+
+fn message_select_go_up(state: &mut RefMut<TUIState>) {
+    let mut selected_message = state.ui_data.selected_message.borrow_mut();
+    if let Some(id) = *selected_message {
+        if id > 0 {
+            *selected_message = Some(id - 1);
+        }
+    }
+}
+
+fn message_select_go_down(state: &mut RefMut<TUIState>) {
+    if let Some(r_id) = state.ui_data.current_room {
+        let room = &state.chat_data.chat_rooms[r_id];
+        if let Some(l_id) = state.ui_data.current_log {
+            let log = &room.chats[l_id];
+            let mut selected_message = state.ui_data.selected_message.borrow_mut();
+            if let Some(id) = *selected_message {
+                if id < log.messages.len() - 1 {
+                    *selected_message = Some(id + 1);
+                }
             }
         }
     }
@@ -386,6 +439,44 @@ fn send_current_text_message(
                 state.ui_data.text_message_in_edit = "".to_string();
                 let mut go_to_chat_bottom = state.ui_data.go_to_chat_bottom.borrow_mut();
                 *go_to_chat_bottom = true;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn select_last_message(state: &mut RefMut<TUIState>) -> Result<(), ClientError> {
+    if let Some(r_id) = state.ui_data.current_room {
+        let room = &state.chat_data.chat_rooms[r_id];
+        if let Some(l_id) = state.ui_data.current_log {
+            let log = &room.chats[l_id];
+            let mut selected_message = state.ui_data.selected_message.borrow_mut();
+            if !log.messages.is_empty() {
+                *selected_message = Some(log.messages.len() - 1);
+            } else {
+                *selected_message = None;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn delete_selected_message(
+    stream: &mut TcpStream,
+    state: &mut RefMut<TUIState>,
+) -> Result<(), ClientError> {
+    if let Some(r_id) = state.ui_data.current_room {
+        if let Some(l_id) = state.ui_data.current_log {
+            let selected_message = state.ui_data.selected_message.borrow_mut();
+            if let Some(m_id) = *selected_message {
+                drop(selected_message);
+                let room = &mut state.chat_data.chat_rooms[r_id];
+                let log = &mut room.chats[l_id];
+                let msg = &mut log.messages[m_id];
+                if msg.status.is_some() {
+                    send_message(stream, DeleteMessage(room.id, log.id, msg.id))?;
+                    msg.content = None;
+                }
             }
         }
     }

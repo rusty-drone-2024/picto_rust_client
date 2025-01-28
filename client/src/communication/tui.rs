@@ -1,5 +1,6 @@
 use crate::state::Client;
 use client_lib::communication::TUICommand::{UpdateChatRoom, UpdateName};
+use client_lib::communication::TUIEvent::DeleteMessage;
 use client_lib::communication::{receive_message, send_message, TUIEvent};
 use client_lib::ClientError;
 use client_lib::ClientError::LockError;
@@ -40,7 +41,13 @@ fn handle_tui_event(
             send_message(stream, UpdateName(s))?;
         }
         TUIEvent::RegisterToServer(cr) => {
+            //TODO: send register request to server;
+            //TODO: wait for positive ack;
             send_message(stream, UpdateChatRoom(cr, Some(true), None))?;
+        }
+        TUIEvent::DeleteMessage(cr, cl, cm) => {
+            //TODO: send delete request to server;
+            //TODO: wait for positive ack;
         }
         _ => {}
     }

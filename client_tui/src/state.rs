@@ -117,6 +117,7 @@ pub(crate) struct UIData<'a> {
     pub name_in_editing: Option<String>,
     pub scroll_view_state: RefCell<ScrollViewState>,
     pub go_to_chat_bottom: RefCell<bool>,
+    pub selected_message: RefCell<Option<usize>>,
 }
 
 impl TUIState<'_> {
@@ -138,6 +139,7 @@ impl TUIState<'_> {
                 name_in_editing: None,
                 scroll_view_state: RefCell::new(ScrollViewState::default()),
                 go_to_chat_bottom: RefCell::new(false),
+                selected_message: RefCell::new(None),
             },
             kill: false,
         }
