@@ -9,7 +9,6 @@ use ratatui::widgets::Block;
 use ratatui::widgets::BorderType::Rounded;
 use ratatui::Frame;
 use std::cell::Ref;
-use tui_scrollview::ScrollViewState;
 
 pub(super) fn draw_chat_view(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>) {
     let border_style = if let ChatView = state.ui_data.active_component {
@@ -22,9 +21,12 @@ pub(super) fn draw_chat_view(frame: &mut Frame, rect: Rect, state: &Ref<TUIState
         if let Some(r_id) = state.ui_data.current_room {
             let curr_room = &state.chat_data.chat_rooms[r_id];
             let curr_log = &curr_room.chats[l_id];
+            let scroll_view_state = state.ui_data.scroll_view_state.borrow_mut();
+            let go_to_chat_bottom = state.ui_data.go_to_chat_bottom.borrow_mut();
             let mut chat_scroll_view = ChatScrollView {
                 messages: &curr_log.messages,
-                scroll_view_state: ScrollViewState::default(),
+                scroll_view_state,
+                go_to_chat_bottom,
             };
             let inner = Rect::new(rect.x + 1, rect.y + 1, rect.width - 1, rect.height - 2);
             frame.render_widget(

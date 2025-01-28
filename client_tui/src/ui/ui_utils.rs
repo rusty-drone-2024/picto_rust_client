@@ -1,11 +1,9 @@
-use crate::state::ActiveComponent;
 use crate::ui::{
     CENTER_MAIN_H_SPLIT_MIN_WIDTH, INFO_HEIGHT, LEFT_MAIN_H_SPLIT_MIN_WIDTH, NAME_SET_HEIGHT,
     RIGHT_MAIN_H_SPLIT_MIN_WIDTH, TEXT_EDIT_HEIGHT,
 };
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
-use unicode_width::UnicodeWidthStr;
 
 pub(super) fn centered_percent_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     // Cut the given rectangle into three vertical pieces

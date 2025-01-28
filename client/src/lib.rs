@@ -60,7 +60,7 @@ pub fn run() -> Result<(), ClientError> {
         ),
     )?;
     send_message(&mut stream, UpdatePeerName(1, 1, "Gabry".to_string()))?;
-    for i in 0..5 {
+    for i in 0..25 {
         send_message(
             &mut stream,
             UpdateMessageContent(1, 1, i, TextMessage(format!("Test {}", i).to_string())),

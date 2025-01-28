@@ -3,8 +3,10 @@ use client_lib::communication::{
     ChatClientID, ChatServerID, MessageContent, MessageID, MessageStatus, Reaction, TimeStamp,
 };
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Equal, Greater, Less};
+use tui_scrollview::ScrollViewState;
 
 #[derive(Debug)]
 pub(crate) struct EditableContent;
@@ -113,6 +115,8 @@ pub(crate) struct UIData<'a> {
     pub reacting_to: Option<usize>,
     pub selected_reaction: Option<&'a Reaction>,
     pub name_in_editing: Option<String>,
+    pub scroll_view_state: RefCell<ScrollViewState>,
+    pub go_to_chat_bottom: RefCell<bool>,
 }
 
 impl TUIState<'_> {
@@ -132,6 +136,8 @@ impl TUIState<'_> {
                 reacting_to: None,
                 selected_reaction: None,
                 name_in_editing: None,
+                scroll_view_state: RefCell::new(ScrollViewState::default()),
+                go_to_chat_bottom: RefCell::new(false),
             },
             kill: false,
         }

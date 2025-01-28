@@ -149,7 +149,17 @@ fn handle_chat_select_event(
                 }
                 KeyCode::Enter => {
                     if let Some(l_id) = state.ui_data.selected_log {
+                        let mut go_to_chat_bottom = state.ui_data.go_to_chat_bottom.borrow_mut();
+                        if let Some(c_id) = state.ui_data.current_log {
+                            if l_id != c_id {
+                                *go_to_chat_bottom = true;
+                            }
+                        } else {
+                            *go_to_chat_bottom = true;
+                        }
+                        drop(go_to_chat_bottom);
                         state.ui_data.current_log = Some(l_id);
+
                         go_to_chat_view(state);
                     }
                 }
@@ -181,6 +191,12 @@ fn handle_chat_view_event(
             }
         } else {
             match key.code {
+                KeyCode::Up => {
+                    state.ui_data.scroll_view_state.borrow_mut().scroll_up();
+                }
+                KeyCode::Down => {
+                    state.ui_data.scroll_view_state.borrow_mut().scroll_down();
+                }
                 _ => {}
             }
         }
@@ -206,21 +222,8 @@ fn handle_text_area_event(
                 KeyCode::Up => {
                     go_to_chat_view(state);
                 }
-                _ => {}
-            }
-        } else if key.modifiers.contains(KeyModifiers::SHIFT) {
-            match key.code {
-                KeyCode::Enter => {
-                    if !text.is_empty() {
-                        let lines: Vec<&str> = text.split("\n").collect();
-                        let last_line = lines.last().unwrap();
-                        if !last_line.is_empty() {
-                            text.push('\n');
-                        }
-                    }
-                }
-                KeyCode::Char(c) => {
-                    text.push(c);
+                KeyCode::Char('s') => {
+                    send_current_text_message(stream, state)?;
                 }
                 _ => {}
             }
@@ -235,7 +238,13 @@ fn handle_text_area_event(
                     }
                 }
                 KeyCode::Enter => {
-                    send_current_text_message(stream, state)?;
+                    if !text.is_empty() {
+                        let lines: Vec<&str> = text.split("\n").collect();
+                        let last_line = lines.last().unwrap();
+                        if !last_line.is_empty() {
+                            text.push('\n');
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -375,6 +384,8 @@ fn send_current_text_message(
                         deleted: false,
                     });
                 state.ui_data.text_message_in_edit = "".to_string();
+                let mut go_to_chat_bottom = state.ui_data.go_to_chat_bottom.borrow_mut();
+                *go_to_chat_bottom = true;
             }
         }
     }

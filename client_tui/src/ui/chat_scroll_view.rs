@@ -1,4 +1,5 @@
 use crate::state::ChatMessage;
+use crate::ui::RIGHT_MAIN_H_SPLIT_MIN_WIDTH;
 use client_lib::communication::MessageContent::*;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Fill, Length, Percentage};
@@ -6,13 +7,16 @@ use ratatui::layout::{Layout, Position, Rect, Size};
 use ratatui::prelude::StatefulWidget;
 use ratatui::widgets::BorderType::Rounded;
 use ratatui::widgets::{Block, Paragraph, Widget, Wrap};
+use serde::de::IntoDeserializer;
+use std::cell::RefMut;
 use tui_scrollview::ScrollbarVisibility::{Always, Never};
 use tui_scrollview::{ScrollView, ScrollViewState};
 use unicode_width::UnicodeWidthStr;
 
 pub(crate) struct ChatScrollView<'a> {
     pub(crate) messages: &'a Vec<ChatMessage>,
-    pub(crate) scroll_view_state: ScrollViewState,
+    pub(crate) scroll_view_state: RefMut<'a, ScrollViewState>,
+    pub(crate) go_to_chat_bottom: RefMut<'a, bool>,
 }
 
 impl<'a> ChatScrollView<'a> {
@@ -64,6 +68,7 @@ impl<'a> ChatScrollView<'a> {
         }
         current_height
     }
+
     fn message(&self, m: &ChatMessage) -> Paragraph {
         let mc = &m.content;
         if let Some(mci) = mc {
@@ -89,13 +94,14 @@ impl<'a> Widget for &mut ChatScrollView<'a> {
         let mut scroll_view = ScrollView::new(Size::new(area.width, h))
             .horizontal_scrollbar_visibility(Never)
             .vertical_scrollbar_visibility(Always);
-        self.render_messages_into_scrollview(scroll_view.buf_mut());
-        if area.height < h {
+        if *self.go_to_chat_bottom && area.height < h {
             self.scroll_view_state.set_offset(Position {
                 x: 0,
                 y: h - area.height,
             });
+            *self.go_to_chat_bottom = false;
         }
+        self.render_messages_into_scrollview(scroll_view.buf_mut());
         scroll_view.render(area, buf, &mut self.scroll_view_state)
     }
 }

@@ -71,8 +71,8 @@ pub(super) fn draw_help_box(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>
             text.push_str("Write your message!\n");
             text.push_str("<C-Up>   : Go to chat view\n");
             text.push_str("<C-Left> : Go to chats\n");
-            text.push_str("<S-Enter>: New Line\n");
-            text.push_str("<Enter>  : Send message\n");
+            text.push_str("<Enter>  : New Line\n");
+            text.push_str("<C-S>    : Send message\n");
         }
         _ => {}
     }
