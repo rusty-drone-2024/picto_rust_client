@@ -3,7 +3,7 @@ use crate::state::NameSetAction::*;
 use crate::state::{ChatMessage, TUIState};
 use client_lib::communication::MessageContent::TextMessage;
 use client_lib::communication::MessageStatus::SentToServer;
-use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SendMessage};
+use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SendMessage, SetName};
 use client_lib::communication::{send_message, ChatClientID, ChatServerID};
 use client_lib::ClientError;
 use rand::Rng;
@@ -23,13 +23,56 @@ pub(super) fn handle_event(
             Displaying => {
                 handle_name_set_displaying_event(stream, &mut state, event)?;
             }
-            ChangingName(s) => {}
+            ChangingName => {
+                handle_name_set_changing_event(stream, &mut state, event)?;
+            }
         },
         RoomSelect => handle_room_select_event(stream, &mut state, event)?,
         ChatSelect => handle_chat_select_event(stream, &mut state, event)?,
         ChatView => handle_chat_view_event(stream, &mut state, event)?,
         TextEdit => handle_text_area_event(stream, &mut state, event)?,
         _ => {}
+    }
+    Ok(())
+}
+
+fn handle_name_set_changing_event(
+    stream: &mut TcpStream,
+    state: &mut RefMut<TUIState>,
+    event: Event,
+) -> Result<(), ClientError> {
+    if let Event::Key(key) = event {
+        if key.kind == event::KeyEventKind::Release {
+            return Ok(());
+        }
+        match key.code {
+            KeyCode::Esc => {
+                state.ui_data.name_in_editing = None;
+                state.ui_data.active_component = NameSet(Displaying);
+            }
+            KeyCode::Enter => {
+                if let Some(name) = &state.ui_data.name_in_editing {
+                    if !name.is_empty() {
+                        send_message(stream, SetName(name.clone()))?;
+                        state.ui_data.name_in_editing = None;
+                        state.ui_data.active_component = NameSet(Displaying);
+                    }
+                }
+            }
+            KeyCode::Char(c) => {
+                if let Some(name) = &mut state.ui_data.name_in_editing {
+                    name.push(c);
+                }
+            }
+            KeyCode::Backspace => {
+                if let Some(name) = &mut state.ui_data.name_in_editing {
+                    if !name.is_empty() {
+                        name.pop();
+                    }
+                }
+            }
+            _ => {}
+        }
     }
     Ok(())
 }
@@ -56,7 +99,8 @@ fn handle_name_set_displaying_event(
         } else {
             match key.code {
                 KeyCode::Enter => {
-                    //TODO: set active component to NameSet(ChangingName()) and handle them events
+                    state.ui_data.name_in_editing = Some(state.chat_data.current_name.to_string());
+                    state.ui_data.active_component = NameSet(ChangingName);
                 }
                 _ => {}
             }

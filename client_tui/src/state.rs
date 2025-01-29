@@ -88,7 +88,7 @@ pub(crate) enum ActiveComponent {
 #[derive(Debug, Clone)]
 pub(crate) enum NameSetAction {
     Displaying,
-    ChangingName(String),
+    ChangingName,
 }
 
 #[derive(Debug, Clone)]

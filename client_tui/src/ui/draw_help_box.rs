@@ -11,7 +11,7 @@ pub(super) fn draw_help_box(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>
     let mut text = "".to_string();
     match &state.ui_data.active_component {
         NameSet(a) => {
-            if let NameSetAction::ChangingName(_) = a {
+            if let NameSetAction::ChangingName = a {
                 text.push_str("Write your name!\n");
                 text.push_str("<Esc>        : Cancel action\n");
                 text.push_str("<Enter>      : Confirm new name\n");
