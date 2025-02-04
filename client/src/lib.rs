@@ -8,20 +8,17 @@ use crate::network::Network;
 use client_lib::ClientError::StreamError;
 use common_structs::leaf::{Leaf, LeafCommand, LeafEvent};
 use crossbeam_channel::{Receiver, Sender};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use wg_2024::network::NodeId;
-use wg_2024::packet::Packet;
+use wg_2024::packet::{Fragment, Packet};
 
 pub struct Client {
-    id: NodeId,
-    controller_send: Sender<LeafEvent>,
     controller_recv: Receiver<LeafCommand>,
-    packet_send: HashMap<NodeId, Sender<Packet>>,
     packet_recv: Receiver<Packet>,
-    network: Arc<Mutex<RefCell<Network>>>,
+    network: Arc<Mutex<Network>>,
+    partially_received: HashMap<u64, Vec<Option<Fragment>>>,
 }
 impl Leaf for Client {
     fn new(
@@ -35,12 +32,10 @@ impl Leaf for Client {
         Self: Sized,
     {
         Client {
-            id,
-            controller_send,
             controller_recv,
-            packet_send,
             packet_recv,
-            network: Arc::new(Mutex::new(RefCell::new(Network::new()))),
+            network: Arc::new(Mutex::new(Network::new(id, packet_send, controller_send))),
+            partially_received: HashMap::new(),
         }
     }
 

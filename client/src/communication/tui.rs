@@ -8,7 +8,7 @@ use std::cell::RefCell;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 
-pub(crate) fn tui_event_receiver(state: Arc<Mutex<RefCell<Network>>>, mut stream: TcpStream) {
+pub(crate) fn tui_event_receiver(state: Arc<Mutex<Network>>, mut stream: TcpStream) {
     loop {
         match receive_message::<TUIEvent>(&mut stream) {
             Ok(event) => {
@@ -30,7 +30,7 @@ pub(crate) fn tui_event_receiver(state: Arc<Mutex<RefCell<Network>>>, mut stream
 }
 
 fn handle_tui_event(
-    state: &Arc<Mutex<RefCell<Network>>>,
+    state: &Arc<Mutex<Network>>,
     stream: &mut TcpStream,
     event: TUIEvent,
 ) -> Result<(), ClientError> {
