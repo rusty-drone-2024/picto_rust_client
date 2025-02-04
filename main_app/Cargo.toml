@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 client = { path = "../client" }
+common_structs = { git = "https://github.com/rusty-drone-2024/common-structs.git" }
+crossbeam-channel = ">=0.5.13"
 client_lib = { path = "../client_lib" }

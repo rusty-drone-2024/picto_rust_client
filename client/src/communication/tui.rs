@@ -1,13 +1,14 @@
-use crate::state::Client;
+use crate::network::Network;
 use client_lib::communication::TUICommand::{UpdateChatRoom, UpdateName};
-use client_lib::communication::TUIEvent::DeleteMessage;
+use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SetName};
 use client_lib::communication::{receive_message, send_message, TUIEvent};
 use client_lib::ClientError;
 use client_lib::ClientError::LockError;
+use std::cell::RefCell;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 
-pub(crate) fn tui_event_receiver(state: Arc<Mutex<Client>>, mut stream: TcpStream) {
+pub(crate) fn tui_event_receiver(state: Arc<Mutex<RefCell<Network>>>, mut stream: TcpStream) {
     loop {
         match receive_message::<TUIEvent>(&mut stream) {
             Ok(event) => {
@@ -29,23 +30,23 @@ pub(crate) fn tui_event_receiver(state: Arc<Mutex<Client>>, mut stream: TcpStrea
 }
 
 fn handle_tui_event(
-    state: &Arc<Mutex<Client>>,
+    state: &Arc<Mutex<RefCell<Network>>>,
     stream: &mut TcpStream,
     event: TUIEvent,
 ) -> Result<(), ClientError> {
-    let mut state = state.lock().map_err(|_| LockError)?;
+    let state = state.lock().map_err(|_| LockError)?;
     match event {
-        TUIEvent::SetName(s) => {
+        SetName(s) => {
             //TODO: send new name to server;
             //TODO: wait for ack;
             send_message(stream, UpdateName(s))?;
         }
-        TUIEvent::RegisterToServer(cr) => {
+        RegisterToServer(cr) => {
             //TODO: send register request to server;
             //TODO: wait for positive ack;
             send_message(stream, UpdateChatRoom(cr, Some(true), None))?;
         }
-        TUIEvent::DeleteMessage(cr, cl, cm) => {
+        DeleteMessage(cr, cl, cm) => {
             //TODO: send delete request to server;
             //TODO: wait for positive ack;
         }
