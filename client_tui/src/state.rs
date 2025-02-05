@@ -91,7 +91,7 @@ pub(crate) enum NameSetAction {
     ChangingName,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct TUIState<'a> {
     pub chat_data: ChatData,
     pub ui_data: UIData<'a>,
@@ -118,6 +118,8 @@ pub(crate) struct UIData<'a> {
     pub scroll_view_state: RefCell<ScrollViewState>,
     pub go_to_chat_bottom: RefCell<bool>,
     pub selected_message: RefCell<Option<usize>>,
+    pub change_window_title: bool,
+    pub new_window_title: String,
 }
 
 impl TUIState<'_> {
@@ -140,6 +142,8 @@ impl TUIState<'_> {
                 scroll_view_state: RefCell::new(ScrollViewState::default()),
                 go_to_chat_bottom: RefCell::new(false),
                 selected_message: RefCell::new(None),
+                change_window_title: false,
+                new_window_title: "".to_string(),
             },
             kill: false,
         }

@@ -4,7 +4,6 @@ use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SetNa
 use client_lib::communication::{receive_message, send_message, TUIEvent};
 use client_lib::ClientError;
 use client_lib::ClientError::LockError;
-use std::cell::RefCell;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 

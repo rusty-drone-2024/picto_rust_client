@@ -8,3 +8,4 @@ wg_2024 = { git = "https://github.com/WGL-2024/WGL_repo_2024.git" }
 common_structs = { git = "https://github.com/rusty-drone-2024/common-structs.git" }
 crossbeam-channel = ">=0.5.13"
 client_lib = { path = "../client_lib" }
+petgraph = "0.7.1"

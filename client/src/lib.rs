@@ -2,13 +2,15 @@ mod communication;
 mod helpers;
 mod network;
 
+use crate::communication::net::*;
 use crate::communication::tui::tui_event_receiver;
 use crate::helpers::{get_stream, new_listener, start_tui};
 use crate::network::Network;
-use client_lib::ClientError::StreamError;
+use client_lib::ClientError::{LockError, StreamError};
 use common_structs::leaf::{Leaf, LeafCommand, LeafEvent};
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::{select, Receiver, Sender};
 use std::collections::HashMap;
+use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use wg_2024::network::NodeId;
@@ -18,7 +20,7 @@ pub struct Client {
     controller_recv: Receiver<LeafCommand>,
     packet_recv: Receiver<Packet>,
     network: Arc<Mutex<Network>>,
-    partially_received: HashMap<u64, Vec<Option<Fragment>>>,
+    frontend_stream: Option<TcpStream>,
 }
 impl Leaf for Client {
     fn new(
@@ -35,7 +37,7 @@ impl Leaf for Client {
             controller_recv,
             packet_recv,
             network: Arc::new(Mutex::new(Network::new(id, packet_send, controller_send))),
-            partially_received: HashMap::new(),
+            frontend_stream: None,
         }
     }
 
@@ -43,18 +45,50 @@ impl Leaf for Client {
         //START CLIENT TUI AND GET TCP CONNECTION TO IT
         let listener = new_listener().unwrap();
         start_tui(&listener).unwrap();
-        let stream = get_stream(listener).unwrap();
+        let events_frontend_stream = get_stream(listener).unwrap();
+        self.frontend_stream = Some(
+            events_frontend_stream
+                .try_clone()
+                .map_err(|_| StreamError)
+                .unwrap(),
+        );
 
         //INITIALIZE STATE
-        let state_clone_front = Arc::clone(&self.network);
-        let state_clone_back = Arc::clone(&self.network);
-        let tui_events_stream = stream.try_clone().map_err(|_| StreamError).unwrap();
+        let net_front = Arc::clone(&self.network);
+        let net_back = Arc::clone(&self.network);
 
         //TUI EVENT RECEIVER THREAD
         thread::spawn(move || {
-            tui_event_receiver(state_clone_front, tui_events_stream);
+            tui_event_receiver(net_front, events_frontend_stream);
         });
 
-        loop {}
+        let mut exit = false;
+        /*
+        net_back
+            .lock()
+            .map_err(|_| LockError)
+            .unwrap()
+            .initiate_flood();
+         */
+        while !exit {
+            select! {
+                recv(self.controller_recv) -> msg =>{
+                    let mut net_back = net_back.lock().map_err(|_| LockError).unwrap();
+                    let Ok(comm) = msg else {continue;};
+                    exit = handle_command(&mut net_back, comm, &mut self.frontend_stream);
+                    drop(net_back);
+                },
+                recv(self.packet_recv) -> msg => {
+                    let mut net_back = net_back.lock().map_err(|_| LockError).unwrap();
+                    let Ok(packet) = msg else{continue;};
+                    if let Some(error) = find_routing_error(net_back.id, &packet){
+                        handle_routing_error(&mut net_back, packet, error);
+                        continue;
+                    }
+                    net_back.handle_packet(&packet);
+                    drop(net_back);
+                }
+            }
+        }
     }
 }

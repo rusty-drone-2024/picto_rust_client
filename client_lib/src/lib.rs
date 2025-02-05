@@ -10,4 +10,5 @@ pub enum ClientError {
     LockError,
     TUICommandHandlingError,
     UIError,
+    CrossTermError,
 }

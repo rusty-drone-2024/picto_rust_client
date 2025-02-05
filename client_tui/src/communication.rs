@@ -49,7 +49,9 @@ fn handle_backend_command(
     let mut state = state.borrow_mut();
     match command {
         UpdateName(s) => {
-            state.chat_data.current_name = s;
+            state.chat_data.current_name = s.clone();
+            state.ui_data.change_window_title = true;
+            state.ui_data.new_window_title = format!("{}'s chat client", s);
         }
         UpdateChatRoom(id, registered, reachable) => {
             handle_chat_room_update(state, id, registered, reachable)?;
