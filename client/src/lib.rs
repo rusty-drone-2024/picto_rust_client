@@ -6,6 +6,8 @@ use crate::communication::net::*;
 use crate::communication::tui::tui_event_receiver;
 use crate::helpers::{get_stream, new_listener, start_tui};
 use crate::network::Network;
+use client_lib::communication::send_message;
+use client_lib::communication::TUICommand::UpdateName;
 use client_lib::ClientError::{LockError, StreamError};
 use common_structs::leaf::{Leaf, LeafCommand, LeafEvent};
 use crossbeam_channel::{select, Receiver, Sender};
@@ -14,14 +16,20 @@ use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use wg_2024::network::NodeId;
-use wg_2024::packet::{Fragment, Packet};
+use wg_2024::packet::Packet;
 
 pub struct Client {
     controller_recv: Receiver<LeafCommand>,
     packet_recv: Receiver<Packet>,
     network: Arc<Mutex<Network>>,
-    frontend_stream: Option<TcpStream>,
 }
+
+impl Client {
+    fn get_id(&self) -> NodeId {
+        self.network.lock().unwrap().id
+    }
+}
+
 impl Leaf for Client {
     fn new(
         id: NodeId,
@@ -37,7 +45,6 @@ impl Leaf for Client {
             controller_recv,
             packet_recv,
             network: Arc::new(Mutex::new(Network::new(id, packet_send, controller_send))),
-            frontend_stream: None,
         }
     }
 
@@ -46,12 +53,18 @@ impl Leaf for Client {
         let listener = new_listener().unwrap();
         start_tui(&listener).unwrap();
         let events_frontend_stream = get_stream(listener).unwrap();
-        self.frontend_stream = Some(
+        let mut net = self.network.lock().unwrap();
+        net.frontend_stream = Some(
             events_frontend_stream
                 .try_clone()
                 .map_err(|_| StreamError)
                 .unwrap(),
         );
+        let id = self.get_id();
+        if let Some(stream) = &mut net.frontend_stream {
+            let _ = send_message(stream, UpdateName(format!("client_{}", id)));
+        }
+        drop(net);
 
         //INITIALIZE STATE
         let net_front = Arc::clone(&self.network);
@@ -75,7 +88,7 @@ impl Leaf for Client {
                 recv(self.controller_recv) -> msg =>{
                     let mut net_back = net_back.lock().map_err(|_| LockError).unwrap();
                     let Ok(comm) = msg else {continue;};
-                    exit = handle_command(&mut net_back, comm, &mut self.frontend_stream);
+                    exit = handle_command(&mut net_back, comm);
                     drop(net_back);
                 },
                 recv(self.packet_recv) -> msg => {
@@ -85,7 +98,7 @@ impl Leaf for Client {
                         handle_routing_error(&mut net_back, packet, error);
                         continue;
                     }
-                    net_back.handle_packet(&packet);
+                    net_back.handle_packet(packet);
                     drop(net_back);
                 }
             }

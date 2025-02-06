@@ -3,7 +3,6 @@ use client_lib::communication::send_message;
 use client_lib::communication::TUIEvent::Kill;
 use common_structs::leaf::LeafCommand;
 use common_structs::types::*;
-use std::net::TcpStream;
 use std::sync::MutexGuard;
 use wg_2024::network::NodeId;
 use wg_2024::packet::NackType::{ErrorInRouting, UnexpectedRecipient};
@@ -12,11 +11,7 @@ use wg_2024::packet::{
     FloodRequest as FloodRequestData, FloodResponse, Nack, NackType, NodeType, Packet,
 };
 
-pub(crate) fn handle_command(
-    net: &mut MutexGuard<Network>,
-    c: LeafCommand,
-    stream: &mut Option<TcpStream>,
-) -> bool {
+pub(crate) fn handle_command(net: &mut MutexGuard<Network>, c: LeafCommand) -> bool {
     match c {
         LeafCommand::RemoveSender(conn_id) => {
             net.remove_sender(&conn_id);
@@ -25,8 +20,8 @@ pub(crate) fn handle_command(
             net.add_sender(conn_id, sender);
         }
         LeafCommand::Kill => {
-            if let Some(stream) = stream {
-                send_message(stream, Kill);
+            if let Some(stream) = &mut net.frontend_stream {
+                let _ = send_message(stream, Kill);
             }
             return true;
         }
@@ -60,17 +55,23 @@ pub(crate) fn handle_routing_error(
         return net.controller_shortcut(packet);
     };
 
-    let id = net.id;
-    net.send_packet(&new_nack(
-        id,
+    let nack = new_nack(
+        net.id,
         packet.routing_header,
         packet.session_id,
         fragment.fragment_index,
         nack_type,
-    ));
+    );
+
+    let first_hop = nack.routing_header.hops[1];
+    let sender = net.packet_send.get(&first_hop);
+    if let Some(sender) = sender {
+        let sender = sender.clone();
+        net.send_packet(nack, &sender, None);
+    }
 }
 
-fn new_ack(mut routing: Routing, session: Session, fragment_id: FragmentIdx) -> Packet {
+pub fn new_ack(mut routing: Routing, session: Session, fragment_id: FragmentIdx) -> Packet {
     routing.reverse();
     routing.increase_hop_index();
 
@@ -101,7 +102,7 @@ fn new_nack(
     Packet::new_nack(routing, session, nack)
 }
 
-fn new_flood_resp(
+pub fn new_flood_resp(
     self_id: NodeId,
     self_type: NodeType,
     session: Session,

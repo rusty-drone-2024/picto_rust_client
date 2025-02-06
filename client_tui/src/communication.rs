@@ -128,7 +128,7 @@ fn handle_peer_name_update(
     mut state: RefMut<TUIState>,
     room_id: ChatServerID,
     log_id: ChatClientID,
-    name: String,
+    name: Option<String>,
 ) -> Result<(), ClientError> {
     let room_pos_result = state
         .chat_data
@@ -140,14 +140,16 @@ fn handle_peer_name_update(
         let log_pos_result = room.chats.binary_search_by(|cl| cl.id.cmp(&log_id));
         match log_pos_result {
             Ok(log_pos) => {
-                let log = &mut room.chats[log_pos];
-                log.peer_name = name;
+                if let Some(name) = name {
+                    let log = &mut room.chats[log_pos];
+                    log.peer_name = name;
+                }
             }
             Err(_) => {
                 let log = ChatLog {
                     id: log_id,
                     messages: Vec::new(),
-                    peer_name: name,
+                    peer_name: format!("Client_{}", log_id),
 
                     //TODO: set last seen to now
                     last_seen: 0,

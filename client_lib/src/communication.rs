@@ -3,10 +3,11 @@ use crate::ClientError::{SerializationError, StreamError};
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use wg_2024::network::NodeId;
 
-pub type ChatServerID = u32;
-pub type ChatClientID = u32;
-pub type MessageID = u32;
+pub type ChatServerID = NodeId;
+pub type ChatClientID = NodeId;
+pub type MessageID = u64;
 pub type TimeStamp = u32;
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Reaction {
@@ -106,7 +107,7 @@ pub enum TUICommand {
     UpdateChatRoom(ChatServerID, Option<bool>, Option<bool>),
 
     // ChatLog
-    UpdatePeerName(ChatServerID, ChatClientID, String),
+    UpdatePeerName(ChatServerID, ChatClientID, Option<String>),
     UpdatePeerLastSeen(ChatServerID, ChatClientID),
     UpdatePeerStatus(ChatServerID, ChatClientID, bool),
 

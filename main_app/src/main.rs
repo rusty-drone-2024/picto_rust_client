@@ -15,6 +15,9 @@ fn main() {
         packet_recv1,
         HashMap::new(),
     );
+    thread::spawn(move || {
+        client1.run();
+    });
 
     let (controller_send2, _) = unbounded();
     let (_, controller_recv2) = unbounded();
@@ -26,9 +29,7 @@ fn main() {
         packet_recv2,
         HashMap::new(),
     );
-    thread::spawn(move || {
-        client1.run();
-    });
+
     thread::spawn(move || {
         client2.run();
     });

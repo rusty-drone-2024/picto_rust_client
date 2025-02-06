@@ -25,16 +25,16 @@ use std::thread::sleep;
 use std::{thread, time};
 
 fn main() -> Result<(), ClientError> {
-    //GET TCP CONNECTION TO CLIENT BACKEND
-    let mut stream = get_stream()?;
-
     //INITIALIZE STATE
     let state = Arc::new(Mutex::new(RefCell::new(TUIState::new())));
-    let state_clone = Arc::clone(&state);
+
+    //GET TCP CONNECTION TO CLIENT BACKEND
+    let stream = get_stream()?;
     let mut client_backend_stream = stream.try_clone().map_err(|_| StreamError)?;
-    let stream_clone = client_backend_stream.try_clone().map_err(|_| StreamError)?;
 
     //BACKEND STATE RECEIVER THREAD
+    let state_clone = Arc::clone(&state);
+    let stream_clone = client_backend_stream.try_clone().map_err(|_| StreamError)?;
     thread::spawn(move || {
         backend_command_receiver(state_clone, stream_clone);
     });
