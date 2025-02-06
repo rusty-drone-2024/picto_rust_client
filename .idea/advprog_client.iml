@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/client/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client_tui/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/main_app/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client_lib/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tui_common/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/main_app/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
