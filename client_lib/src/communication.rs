@@ -39,7 +39,7 @@ pub enum TUIEvent {
     RegisterToServer(ChatServerID),
     RequestRoomList(ChatServerID),
 
-    Kill,
+    Dead,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

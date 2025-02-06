@@ -24,12 +24,12 @@ pub(super) struct Network {
     controller_send: Sender<LeafEvent>,
     topology: DiGraphMap<NodeId, i32>,
     packs_waiting_for_ack: HashMap<u64, (NodeId, Option<NodeId>, Vec<Packet>)>,
-    messages_waiting_for_ack: HashMap<u64, Message>,
+    pub messages_waiting_for_ack: HashMap<u64, Message>,
     queued_packs: HashMap<NodeId, (Option<NodeId>, Vec<Packet>)>,
     paths_to_leafs: HashMap<NodeId, Option<Vec<NodeId>>>,
     leaf_types: HashMap<NodeId, Option<ServerType>>,
     partially_received: HashMap<u64, Vec<Option<Fragment>>>,
-    current_session: u64,
+    current_session: Session,
     pub frontend_stream: Option<TcpStream>,
 }
 
@@ -131,12 +131,17 @@ impl Network {
         self.update_unreachable_paths();
     }
 
-    pub fn send_message(&mut self, message: Message, target: NodeId, session: Session) {
+    pub fn send_message(&mut self, message: Message, target: NodeId, session: Option<Session>) {
+        let session = if let Some(session) = session {
+            session
+        } else {
+            self.current_session
+        };
         self.messages_waiting_for_ack
             .insert(session, message.clone());
-        let (session, recipient) = match message {
-            Message::ReqChatSend { to: recipient, .. } => (session, Some(recipient)),
-            _ => (self.current_session, None),
+        let recipient = match message {
+            Message::ReqChatSend { to: recipient, .. } => Some(recipient),
+            _ => None,
         };
         let frags = message.into_fragments();
         let mut send_now = false;
@@ -304,15 +309,17 @@ impl Network {
                             let content: Result<TUICommand, _> = serde_json::from_slice(&chat_msg);
                             if let Ok(content) = content {
                                 match content {
-                                    UpdatePeerName(_, _, _)
-                                    | UpdatePeerLastSeen(_, _)
-                                    | UpdatePeerStatus(_, _, _)
-                                    | UpdateMessageContent(_, _, _, _)
-                                    | UpdateMessageStatus(_, _, _, _)
+                                    UpdatePeerName(_, _, _) //after SetName
+                                    | UpdatePeerLastSeen(_, _) //when interacting with room
+                                    | UpdateMessageStatus(_, _, _, _) //DONE: after read message or received
                                     | UpdateMessageReaction(_, _, _, _)
-                                    | DeleteMessage(_, _, _) => {
+                                    | DeleteMessage(_, _, _) => { //DONE: after DeleteMessage
                                         let _ = send_message(stream, content);
                                     }
+                                    UpdateMessageContent(_, _, _, _) => {
+                                        let _ = send_message(stream, content);
+                                        //send received to peer
+                                    }//DONE: after SendMessage
                                     _ => {}
                                 }
                             }
@@ -345,7 +352,7 @@ impl Network {
                 waiting_for_ack_session.2.remove(i);
             }
             if waiting_for_ack_session.2.is_empty() {
-                self.messages_waiting_for_ack.remove(&session);
+                let message = self.messages_waiting_for_ack.remove(&session);
                 let server = waiting_for_ack_session.0;
                 let recipient = waiting_for_ack_session.1;
                 if let Some(ref mut stream) = &mut self.frontend_stream {
@@ -359,6 +366,9 @@ impl Network {
                                 MessageStatus::ReceivedByServer,
                             ),
                         );
+                        if let Some(Message::ReqChatRegistration) = message {
+                            let _ = send_message(stream, UpdateChatRoom(server, Some(true), None));
+                        }
                     }
                 }
             } else {

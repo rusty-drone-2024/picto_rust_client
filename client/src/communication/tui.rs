@@ -1,10 +1,18 @@
 use crate::network::Network;
-use client_lib::communication::TUICommand::{UpdateChatRoom, UpdateName};
-use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SetName};
-use client_lib::communication::{receive_message, send_message, TUIEvent};
+use client_lib::communication::MessageStatus::ReadByPeer;
+use client_lib::communication::TUICommand::{
+    UpdateChatRoom, UpdateMessageContent, UpdateMessageReaction, UpdateMessageStatus, UpdateName,
+};
+use client_lib::communication::TUIEvent::*;
+use client_lib::communication::{receive_message, send_message, TUICommand, TUIEvent};
 use client_lib::ClientError;
-use client_lib::ClientError::LockError;
+use client_lib::ClientError::{LockError, SerializationError};
+use common_structs::message::Message;
+use common_structs::message::Message::{
+    ReqChatClients, ReqChatRegistration, ReqChatSend, RespChatFrom,
+};
 use std::net::TcpStream;
+use std::os::linux::raw::stat;
 use std::sync::{Arc, Mutex};
 
 pub(crate) fn tui_event_receiver(state: Arc<Mutex<Network>>, mut stream: TcpStream) {
@@ -33,23 +41,68 @@ fn handle_tui_event(
     stream: &mut TcpStream,
     event: TUIEvent,
 ) -> Result<(), ClientError> {
-    let state = state.lock().map_err(|_| LockError)?;
+    let mut state = state.lock().map_err(|_| LockError)?;
     match event {
         SetName(s) => {
             //TODO: send new name to server;
-            //TODO: wait for ack;
             send_message(stream, UpdateName(s))?;
         }
         RegisterToServer(cr) => {
-            //TODO: send register request to server;
-            //TODO: wait for positive ack;
-            send_message(stream, UpdateChatRoom(cr, Some(true), None))?;
+            state.send_message(ReqChatRegistration, cr, None);
         }
         DeleteMessage(cr, cl, cm) => {
-            //TODO: send delete request to server;
-            //TODO: wait for positive ack;
+            let command = TUICommand::DeleteMessage(cr, state.id, cm);
+            let content = serde_json::to_string(&command)
+                .unwrap()
+                .as_bytes()
+                .to_owned();
+            let message = ReqChatSend {
+                to: cl,
+                chat_msg: content,
+            };
+            state.send_message(message, cr, Some(cm));
         }
-        _ => {}
+        SendMessage(cr, cl, cm, mc) => {
+            let command = UpdateMessageContent(cr, state.id, cm, mc);
+            let content = serde_json::to_string(&command)
+                .unwrap()
+                .as_bytes()
+                .to_owned();
+            let message = ReqChatSend {
+                to: cl,
+                chat_msg: content,
+            };
+            state.send_message(message, cr, Some(cm));
+        }
+        ReadMessage(cr, cl, cm) => {
+            let command = UpdateMessageStatus(cr, state.id, cm, ReadByPeer);
+            let content = serde_json::to_string(&command)
+                .unwrap()
+                .as_bytes()
+                .to_owned();
+            let message = ReqChatSend {
+                to: cl,
+                chat_msg: content,
+            };
+            state.send_message(message, cr, Some(cm));
+        }
+        ReactToMessage(cr, cl, cm, reaction) => {
+            let command = UpdateMessageReaction(cr, state.id, cm, Some(reaction));
+            let content = serde_json::to_string(&command)
+                .unwrap()
+                .as_bytes()
+                .to_owned();
+            let message = ReqChatSend {
+                to: cl,
+                chat_msg: content,
+            };
+            state.send_message(message, cr, Some(cm));
+        }
+        RequestRoomList(cr) => {
+            let message = ReqChatClients;
+            state.send_message(message, cr, None);
+        }
+        Dead => {}
     }
     Ok(())
 }

@@ -1,6 +1,6 @@
 use crate::network::Network;
 use client_lib::communication::send_message;
-use client_lib::communication::TUIEvent::Kill;
+use client_lib::communication::TUICommand::Kill;
 use common_structs::leaf::LeafCommand;
 use common_structs::types::*;
 use std::sync::MutexGuard;
