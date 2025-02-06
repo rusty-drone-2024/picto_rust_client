@@ -1,2 +1,2 @@
 [workspace]
-members = ["main_app", "client", "client_tui", "client_lib"]
+members = ["main_app", "client", "client_tui", "tui_common"]
