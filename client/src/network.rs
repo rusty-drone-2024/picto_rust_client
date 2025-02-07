@@ -11,12 +11,10 @@ use petgraph::graphmap::DiGraphMap;
 use std::collections::HashMap;
 use std::net::TcpStream;
 use wg_2024::network::{NodeId, SourceRoutingHeader};
-use wg_2024::packet::NodeType::{Client, Drone};
+use wg_2024::packet::NodeType::Client;
 use wg_2024::packet::{
     Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
 };
-
-pub type Path = Vec<NodeId>;
 
 pub(super) struct Network {
     pub id: NodeId,
@@ -116,19 +114,6 @@ impl Network {
         for sender in senders {
             self.send_packet(packet.clone(), &sender, None);
         }
-    }
-    pub fn update_topology(&mut self, subgraph: Vec<(NodeId, NodeType)>) {
-        for node in 0..subgraph.len() - 1 {
-            let curr = subgraph[node];
-            let next = subgraph[node + 1];
-            if let Drone = curr.1 {
-                self.topology.add_edge(curr.0, next.0, 1);
-            }
-            if let Drone = next.1 {
-                self.topology.add_edge(next.0, curr.0, 1);
-            }
-        }
-        self.update_unreachable_paths();
     }
 
     pub fn send_message(&mut self, message: Message, target: NodeId, session: Option<Session>) {
@@ -408,6 +393,7 @@ impl Network {
                 self.check_queued(leaf);
             }
         }
+        self.initiate_flood();
     }
     fn handle_flood_request_receive(&mut self, session: Session, flood_request: FloodRequest) {
         let flood_res = new_flood_resp(self.id, Client, session, flood_request);

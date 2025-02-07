@@ -436,8 +436,8 @@ fn send_current_text_message(
             let log = &room.chats[log_pos];
             let room_id = room.id;
             let log_id = log.id;
-            let mut rng = rand::thread_rng();
-            let msg_id = rng.gen();
+            let mut rng = rand::rng();
+            let msg_id = rng.random();
             let mut msg = state.ui_data.text_message_in_edit.clone();
             let mut cleaned = false;
             while !cleaned {

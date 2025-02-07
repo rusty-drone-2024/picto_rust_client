@@ -75,13 +75,11 @@ impl Leaf for Client {
         });
 
         let mut exit = false;
-        /*
         net_back
             .lock()
             .map_err(|_| LockError)
             .unwrap()
             .initiate_flood();
-         */
         while !exit {
             select! {
                 recv(self.controller_recv) -> msg =>{
