@@ -195,6 +195,7 @@ impl Network {
                 }
                 Server => {
                     self.leaf_types.insert(id, None);
+                    self.paths_to_leafs.insert(id, None);
                     self.send_message(Message::ReqServerType, id, None);
                     if let Some(stream) = &mut self.frontend_stream {
                         let _ = send_message(stream, UpdateChatRoom(id, None, Some(true)));
@@ -203,6 +204,7 @@ impl Network {
             }
 
             let _ = self.add_path(&path, true);
+            self.update_unreachable_paths();
             self.check_queued(id);
         }
     }
