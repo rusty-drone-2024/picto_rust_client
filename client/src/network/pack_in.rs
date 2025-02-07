@@ -125,7 +125,10 @@ impl Network {
                             ),
                         );
                         if let Some(Message::ReqChatRegistration) = message {
-                            let _ = send_message(stream, UpdateChatRoom(server, Some(true), None));
+                            let _ = send_message(
+                                stream,
+                                UpdateChatRoom(server, Some(true), Some(true)),
+                            );
                         }
                     }
                 }
@@ -175,9 +178,6 @@ impl Network {
         self.send_packet(flood_res, &sender, None);
     }
     fn handle_flood_response_receive(&mut self, flood_response: FloodResponse) {
-        if flood_response.flood_id != self.current_session {
-            return;
-        }
         let last = flood_response.path_trace.last().copied();
         if let Some((id, node_type)) = last {
             let path = flood_response
@@ -190,6 +190,12 @@ impl Network {
             if node_type == NodeType::Drone {
                 let _ = self.add_path(&path, false);
                 return;
+            }
+
+            if node_type == NodeType::Server {
+                if let Some(stream) = &mut self.frontend_stream {
+                    let _ = send_message(stream, UpdateChatRoom(id, None, Some(true)));
+                }
             }
 
             let _ = self.add_path(&path, true);
