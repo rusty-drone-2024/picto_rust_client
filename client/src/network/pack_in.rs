@@ -7,7 +7,7 @@ use client_lib::communication::TUICommand::{
 use client_lib::communication::{send_message, MessageStatus, TUICommand};
 use common_structs::message::{Message, ServerType};
 use common_structs::types::{Routing, Session};
-use wg_2024::packet::NodeType::Client;
+use wg_2024::packet::NodeType::{Client, Server};
 use wg_2024::packet::{
     Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
 };
@@ -187,14 +187,18 @@ impl Network {
                 .collect::<Vec<_>>();
 
             // Only add last as only leaf are valid destination (which are always at end)
-            if node_type == NodeType::Drone {
-                let _ = self.add_path(&path, false);
-                return;
-            }
-
-            if node_type == NodeType::Server {
-                if let Some(stream) = &mut self.frontend_stream {
-                    let _ = send_message(stream, UpdateChatRoom(id, None, Some(true)));
+            match node_type {
+                Client => {}
+                NodeType::Drone => {
+                    let _ = self.add_path(&path, false);
+                    return;
+                }
+                Server => {
+                    self.leaf_types.insert(id, None);
+                    self.send_message(Message::ReqServerType, id, None);
+                    if let Some(stream) = &mut self.frontend_stream {
+                        let _ = send_message(stream, UpdateChatRoom(id, None, Some(true)));
+                    }
                 }
             }
 

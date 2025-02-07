@@ -27,6 +27,7 @@ pub(crate) fn tui_event_receiver(state: Arc<Mutex<Network>>, mut stream: TcpStre
             }
             Err(e) => {
                 println!("Backend: Error reading event: {:?}", e);
+                break;
             }
         }
     }
