@@ -330,12 +330,10 @@ fn go_to_room_select(state: &mut RefMut<TUIState>) {
     state.ui_data.selected_log = None;
     if let Some(r_id) = state.ui_data.current_room {
         state.ui_data.selected_room = Some(r_id);
+    } else if !state.chat_data.chat_rooms.is_empty() {
+        state.ui_data.selected_room = Some(0);
     } else {
-        if !state.chat_data.chat_rooms.is_empty() {
-            state.ui_data.selected_room = Some(0);
-        } else {
-            state.ui_data.selected_room = None;
-        }
+        state.ui_data.selected_room = None;
     }
 }
 fn go_to_chat_select(state: &mut RefMut<TUIState>) {
