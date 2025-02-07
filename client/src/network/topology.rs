@@ -3,14 +3,18 @@ use petgraph::algo::astar;
 use wg_2024::network::NodeId;
 
 impl Network {
+    //finds out if nodes that were reachable before are now not reachable anymore
     pub(super) fn update_reachable_paths(&mut self) {
+        //gets all known leafs' ids
         let mut leafs = Vec::new();
         for leaf in self.paths_to_leafs.keys() {
             leafs.push(*leaf);
         }
 
         for leaf in leafs {
+            //if it used to be a valid path to the leaf
             if self.paths_to_leafs.get(&leaf).is_some() {
+                //try to see if there's still a valid path to it
                 let path = astar(
                     &self.topology,
                     self.id,
@@ -19,22 +23,29 @@ impl Network {
                     |_| 0,
                 );
                 if let Some((_, path)) = path {
+                    //could be different so if there's still one add it
                     self.paths_to_leafs.insert(leaf, Some(path));
                 } else {
+                    //remove path from leaf and flood
                     self.paths_to_leafs.insert(leaf, None);
+                    self.initiate_flood();
                 }
             }
         }
     }
 
+    //finds out if nodes that were unreachable before are now reachable
     pub(super) fn update_unreachable_paths(&mut self) {
+        //gets all known leafs' ids
         let mut leafs = Vec::new();
         for leaf in self.paths_to_leafs.keys() {
             leafs.push(*leaf);
         }
 
         for leaf in leafs {
+            //if there's no known valid path to the leaf
             if self.paths_to_leafs.get(&leaf).is_none() {
+                //try to find one
                 let path = astar(
                     &self.topology,
                     self.id,
@@ -42,6 +53,7 @@ impl Network {
                     |_| 1,
                     |_| 0,
                 );
+                //if found add path to known paths and try sending any queued messages for that leaf
                 if let Some((_, path)) = path {
                     self.paths_to_leafs.insert(leaf, Some(path));
                     self.check_queued(leaf);
@@ -49,6 +61,7 @@ impl Network {
             }
         }
     }
+    //adds partial path to topology
     pub(super) fn add_path(&mut self, path: &[NodeId], is_last_leaf: bool) -> Result<(), String> {
         if Some(self.id) != path.first().copied() {
             return Err("Path does not start with this node".to_string());

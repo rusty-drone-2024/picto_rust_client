@@ -5,6 +5,9 @@ use wg_2024::network::{NodeId, SourceRoutingHeader};
 use wg_2024::packet::Packet;
 
 impl Network {
+    pub fn get_id(&self) -> NodeId {
+        self.id
+    }
     pub fn check_queued(&mut self, leaf: NodeId) {
         let packs = self.queued_packs.remove(&leaf);
         if let Some(packs) = packs {

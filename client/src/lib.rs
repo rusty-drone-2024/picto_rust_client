@@ -23,12 +23,6 @@ pub struct Client {
     network: Arc<Mutex<Network>>,
 }
 
-impl Client {
-    fn get_id(&self) -> NodeId {
-        self.network.lock().unwrap().id
-    }
-}
-
 impl Leaf for Client {
     fn new(
         id: NodeId,
@@ -59,7 +53,7 @@ impl Leaf for Client {
                 .map_err(|_| StreamError)
                 .unwrap(),
         );
-        let id = self.get_id();
+        let id = net.get_id();
         if let Some(stream) = &mut net.frontend_stream {
             let _ = send_message(stream, UpdateName(format!("client_{}", id)));
         }

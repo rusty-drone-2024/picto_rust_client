@@ -8,16 +8,20 @@ use wg_2024::packet::{FloodRequest, NodeType, Packet, PacketType};
 
 impl Network {
     pub fn initiate_flood(&mut self) {
+        //construct flood request packet
         let packet = Packet::new_flood_request(
             Routing::empty_route(),
             0,
             FloodRequest::initialize(self.current_session, self.id, NodeType::Client),
         );
+        //increment session
         self.current_session += 1;
+        //for every neighbor
         let mut senders = Vec::new();
         for sender in self.packet_send.values() {
             senders.push(sender.clone());
         }
+        //send flood request
         for sender in senders {
             self.send_packet(packet.clone(), &sender, None);
         }
@@ -67,7 +71,7 @@ impl Network {
         recipient: Option<NodeId>,
     ) {
         let send_res = sender.send(pack.clone());
-        if let Err(_) = send_res {
+        if send_res.is_err() {
             match &pack.pack_type {
                 PacketType::MsgFragment(_) => {
                     let pack = pack.clone();
