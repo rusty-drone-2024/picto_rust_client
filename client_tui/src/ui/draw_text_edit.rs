@@ -16,7 +16,7 @@ pub(super) fn draw_text_edit(frame: &mut Frame, rect: Rect, state: &Ref<TUIState
         Style::new()
     };
 
-    if let Some(l_id) = state.ui_data.current_log {
+    if state.ui_data.current_log.is_some() {
         let text = state.ui_data.text_message_in_edit.clone();
         let text_clone = text.clone();
 

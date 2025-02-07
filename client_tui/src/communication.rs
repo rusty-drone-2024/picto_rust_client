@@ -33,7 +33,7 @@ pub(crate) fn backend_command_receiver(
                     }
                 };
             }
-            Err(e) => {
+            Err(_) => {
                 //println!("Error reading command: {:#?}\n\n", e);
             }
         }

@@ -1,4 +1,4 @@
-use crate::state::ActiveComponent::{NameSet, RoomSelect, Startup};
+use crate::state::ActiveComponent::RoomSelect;
 use client_lib::communication::{
     ChatClientID, ChatServerID, MessageContent, MessageID, MessageStatus, Reaction, TimeStamp,
 };
@@ -7,9 +7,6 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Equal, Greater, Less};
 use tui_scrollview::ScrollViewState;
-
-#[derive(Debug)]
-pub(crate) struct EditableContent;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatRoom {
@@ -76,6 +73,7 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) enum ActiveComponent {
     Startup,
     RoomSelect,
@@ -105,6 +103,7 @@ pub(crate) struct ChatData {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct UIData<'a> {
     pub active_component: ActiveComponent,
     pub current_room: Option<usize>,

@@ -11,7 +11,6 @@ use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use std::cell::RefMut;
 use std::net::TcpStream;
-use std::os::linux::raw::stat;
 
 pub(super) fn handle_event(
     stream: &mut TcpStream,
@@ -21,14 +20,14 @@ pub(super) fn handle_event(
     match &state.ui_data.active_component {
         NameSet(action) => match action {
             Displaying => {
-                handle_name_set_displaying_event(stream, &mut state, event)?;
+                handle_name_set_displaying_event(&mut state, event)?;
             }
             ChangingName => {
                 handle_name_set_changing_event(stream, &mut state, event)?;
             }
         },
         RoomSelect => handle_room_select_event(stream, &mut state, event)?,
-        ChatSelect => handle_chat_select_event(stream, &mut state, event)?,
+        ChatSelect => handle_chat_select_event(&mut state, event)?,
         ChatView => handle_chat_view_event(stream, &mut state, event)?,
         TextEdit => handle_text_area_event(stream, &mut state, event)?,
         _ => {}
@@ -78,7 +77,6 @@ fn handle_name_set_changing_event(
 }
 
 fn handle_name_set_displaying_event(
-    stream: &mut TcpStream,
     state: &mut RefMut<TUIState>,
     event: Event,
 ) -> Result<(), ClientError> {
@@ -168,11 +166,7 @@ fn handle_room_select_event(
     Ok(())
 }
 
-fn handle_chat_select_event(
-    stream: &mut TcpStream,
-    state: &mut RefMut<TUIState>,
-    event: Event,
-) -> Result<(), ClientError> {
+fn handle_chat_select_event(state: &mut RefMut<TUIState>, event: Event) -> Result<(), ClientError> {
     if let Event::Key(key) = event {
         if key.kind == event::KeyEventKind::Release {
             return Ok(());

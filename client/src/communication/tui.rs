@@ -1,18 +1,14 @@
 use crate::network::Network;
 use client_lib::communication::MessageStatus::ReadByPeer;
 use client_lib::communication::TUICommand::{
-    UpdateChatRoom, UpdateMessageContent, UpdateMessageReaction, UpdateMessageStatus, UpdateName,
+    UpdateMessageContent, UpdateMessageReaction, UpdateMessageStatus, UpdateName,
 };
 use client_lib::communication::TUIEvent::*;
 use client_lib::communication::{receive_message, send_message, TUICommand, TUIEvent};
 use client_lib::ClientError;
-use client_lib::ClientError::{LockError, SerializationError};
-use common_structs::message::Message;
-use common_structs::message::Message::{
-    ReqChatClients, ReqChatRegistration, ReqChatSend, RespChatFrom,
-};
+use client_lib::ClientError::LockError;
+use common_structs::message::Message::{ReqChatClients, ReqChatRegistration, ReqChatSend};
 use std::net::TcpStream;
-use std::os::linux::raw::stat;
 use std::sync::{Arc, Mutex};
 
 pub(crate) fn tui_event_receiver(state: Arc<Mutex<Network>>, mut stream: TcpStream) {

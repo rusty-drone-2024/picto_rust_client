@@ -16,7 +16,7 @@ use ratatui::crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen, SetTitle,
 };
 use ratatui::crossterm::{event, execute};
-use ratatui::prelude::{CrosstermBackend, Stylize};
+use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
 use std::cell::RefCell;
 use std::io::stdout;
@@ -24,6 +24,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::{thread, time};
 
+#[allow(unreachable_code)]
 fn main() -> Result<(), ClientError> {
     //INITIALIZE STATE
     let state = Arc::new(Mutex::new(RefCell::new(TUIState::new())));
@@ -48,13 +49,13 @@ fn main() -> Result<(), ClientError> {
     loop {
         let thirty = time::Duration::from_millis(30);
         sleep(thirty);
-        let state = state.lock().map_err(|e| LockError)?;
-        terminal.draw(|frame| ui(frame, state.borrow()));
+        let state = state.lock().map_err(|_| LockError)?;
+        let _ = terminal.draw(|frame| ui(frame, state.borrow()));
 
         let event_available = event::poll(thirty).unwrap();
         if event_available {
             let event = event::read().map_err(|_| UIError)?;
-            handle_event(&mut client_backend_stream, state.borrow_mut(), event);
+            let _ = handle_event(&mut client_backend_stream, state.borrow_mut(), event);
         }
 
         let state_borrow = state.borrow();

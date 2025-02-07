@@ -1,9 +1,9 @@
 use client_lib::sys::open_terminal_with_command;
 use client_lib::ClientError;
 use client_lib::ClientError::{EnvError, ListenerError};
+use std::env;
 use std::env::current_exe;
 use std::net::{TcpListener, TcpStream};
-use std::{env, thread};
 
 pub(crate) fn new_listener() -> Result<TcpListener, ClientError> {
     let listener = match TcpListener::bind("127.0.0.1:0") {

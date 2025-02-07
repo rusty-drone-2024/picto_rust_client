@@ -203,7 +203,7 @@ impl Network {
                 let waiting_for_ack_session_data =
                     self.packs_waiting_for_ack.remove(&pack.session_id);
                 let server = *pack.routing_header.hops.last().unwrap();
-                if let Some(mut waiting_for_ack_session_data) = waiting_for_ack_session_data {
+                if let Some(waiting_for_ack_session_data) = waiting_for_ack_session_data {
                     let mut waiting_for_ack_session = waiting_for_ack_session_data.2.clone();
                     waiting_for_ack_session.push(pack.clone());
                     self.packs_waiting_for_ack.insert(

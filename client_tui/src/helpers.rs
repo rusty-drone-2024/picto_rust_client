@@ -16,13 +16,9 @@ pub(crate) fn get_stream() -> Result<TcpStream, ClientError> {
     };
 
     //debug
-    let listener_port = match stream.local_addr() {
-        Ok(local_addr) => local_addr,
-        Err(_) => {
-            return Err(ListenerError);
-        }
+    if stream.local_addr().is_err() {
+        return Err(ListenerError);
     };
-    //println!("stream port: {}", listener_port.port());
 
     Ok(stream)
 }

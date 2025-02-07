@@ -1,7 +1,6 @@
 use crate::state::ChatMessage;
 use client_lib::communication::MessageContent::*;
 use ratatui::buffer::Buffer;
-use ratatui::crossterm::style::Colored::BackgroundColor;
 use ratatui::layout::Constraint::{Fill, Length};
 use ratatui::layout::{Layout, Position, Rect, Size};
 use ratatui::prelude::StatefulWidget;
@@ -31,7 +30,7 @@ impl<'a> ChatScrollView<'a> {
             let h = p.line_count(msg_w - 2) as u16;
             let rect = Rect::new(area.x, current_height, line_w, h);
 
-            if let Some(s) = m.status {
+            if m.status.is_some() {
                 let msg_rect = Layout::horizontal([Fill(1), Length(msg_w)]).areas::<2>(rect)[1];
                 p.render(msg_rect, buf);
             } else {

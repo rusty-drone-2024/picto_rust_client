@@ -2,7 +2,7 @@ use crate::state::ActiveComponent::*;
 use crate::state::{ActiveComponent, TUIState};
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::prelude::Style;
-use ratatui::style::{Styled, Stylize};
+use ratatui::style::Stylize;
 use ratatui::text::Text;
 use ratatui::widgets::BorderType::Rounded;
 use ratatui::widgets::{Block, Cell, Row, Table};

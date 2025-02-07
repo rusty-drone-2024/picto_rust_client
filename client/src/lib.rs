@@ -12,7 +12,6 @@ use client_lib::ClientError::{LockError, StreamError};
 use common_structs::leaf::{Leaf, LeafCommand, LeafEvent};
 use crossbeam_channel::{select, Receiver, Sender};
 use std::collections::HashMap;
-use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use wg_2024::network::NodeId;

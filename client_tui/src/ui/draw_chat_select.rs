@@ -1,11 +1,11 @@
 use crate::state::ActiveComponent::*;
-use crate::state::{ActiveComponent, TUIState};
+use crate::state::TUIState;
 use crate::ui::draw_alert::draw_alert;
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::prelude::{Style, Text};
 use ratatui::style::Stylize;
 use ratatui::widgets::BorderType::Rounded;
-use ratatui::widgets::{Block, Cell, Paragraph, Row, Table};
+use ratatui::widgets::{Block, Cell, Row, Table};
 use ratatui::Frame;
 use std::cell::Ref;
 

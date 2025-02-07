@@ -17,7 +17,7 @@ pub(super) fn draw_help_box(frame: &mut Frame, rect: Rect, state: &Ref<TUIState>
                 text.push_str("<Enter>      : Confirm new name\n");
             } else {
                 text.push_str("<C-Down>     : Go to chat Rooms\n");
-                if let Some(c) = state.ui_data.current_room {
+                if state.ui_data.current_room.is_some() {
                     text.push_str("<C-Right>    : Go to chats\n");
                 }
                 text.push_str("<Enter>      : Edit name\n");
