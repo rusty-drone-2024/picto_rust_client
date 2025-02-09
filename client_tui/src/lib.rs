@@ -25,12 +25,12 @@ use std::thread::sleep;
 use std::{thread, time};
 
 #[allow(unreachable_code)]
-fn main() -> Result<(), ClientError> {
+pub fn loop_forever_chat_tui(port: String) -> Result<(), ClientError> {
     //INITIALIZE STATE
     let state = Arc::new(Mutex::new(RefCell::new(TUIState::new())));
 
     //GET TCP CONNECTION TO CLIENT BACKEND
-    let stream = get_stream()?;
+    let stream = get_stream(port)?;
     let mut client_backend_stream = stream.try_clone().map_err(|_| StreamError)?;
 
     //BACKEND STATE RECEIVER THREAD
