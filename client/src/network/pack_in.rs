@@ -25,9 +25,15 @@ impl Network {
         }
     }
     fn handle_fragment_receive(&mut self, routing: Routing, session: Session, fragment: Fragment) {
+        println!("storing: {:?}", fragment);
         let mut partial_message = Vec::with_capacity(fragment.total_n_fragments as usize);
+
         if let Some(stored_partial_message) = self.partially_received.remove(&session) {
             partial_message = stored_partial_message;
+        } else {
+            for i in 0..fragment.total_n_fragments {
+                partial_message.push(None);
+            }
         }
         partial_message[fragment.fragment_index as usize] = Some(fragment.clone());
 
@@ -39,11 +45,13 @@ impl Network {
         }
 
         if complete {
+            println!("message complete");
             let mut message = Vec::new();
             for frag in partial_message.iter().flatten() {
                 message.push(frag.clone());
             }
             let message = Message::from_fragments(message);
+            println!("completed message: {:?}", message.clone());
             //if message makes sense
             if let Ok(message) = message {
                 match message {
@@ -52,6 +60,12 @@ impl Network {
                         self.leaf_types.insert(server, Some(server_type.clone()));
                         if server_type == ServerType::Chat {
                             self.check_queued(server);
+                            if let Some(stream) = &mut self.frontend_stream {
+                                let _ = send_message(
+                                    stream,
+                                    UpdateChatRoom(server, Some(false), Some(true)),
+                                );
+                            }
                         }
                     }
                     Message::RespClientList(peers) => {
