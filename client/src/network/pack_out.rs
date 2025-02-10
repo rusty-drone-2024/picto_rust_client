@@ -20,13 +20,17 @@ impl Network {
         self.current_session += 1;
         //for every neighbor
         let mut senders = Vec::new();
-        for sender in self.packet_send.values() {
-            senders.push(sender.clone());
+        let mut packs = Vec::new();
+        for sender in &self.packet_send {
+            senders.push(sender.1.clone());
+            let mut pack = packet.clone();
+            pack.routing_header.hops = vec![self.id, *sender.0];
+            packs.push(pack);
         }
 
         //send flood request
-        for sender in senders {
-            self.send_packet(packet.clone(), &sender, None);
+        for i in 0..senders.len() {
+            self.send_packet(packs[i].clone(), &senders[i], None);
         }
     }
     pub fn send_message(&mut self, message: Message, target: NodeId, session: Option<Session>) {

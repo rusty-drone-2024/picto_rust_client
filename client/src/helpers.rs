@@ -40,7 +40,7 @@ pub(crate) fn start_tui(listener: &TcpListener) -> Result<(), ClientError> {
         Ok(tui_exe) => tui_exe,
         Err(_) => return Err(EnvError),
     };
-    
+
     match open_terminal_with_command(&format!("{} chat-tui {}", tui_exe.display(), listener_port)) {
         Ok(_) => Ok(()),
         Err(_) => Err(EnvError),
