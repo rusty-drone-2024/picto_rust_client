@@ -12,7 +12,7 @@ pub fn open_terminal_with_command(command: &str) -> std::io::Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-fn open_terminal_with_command(command: &str) {
+pub fn open_terminal_with_command(command: &str) {
     // Use AppleScript to open a new Terminal window and run a command
     let applescript = format!(
         r#"tell application "Terminal"
