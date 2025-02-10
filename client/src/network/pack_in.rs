@@ -74,8 +74,11 @@ impl Network {
                     Message::RespClientList(peers) => {
                         let server = routing.hops[0];
                         for peer in peers {
-                            if let Some(ref mut stream) = self.frontend_stream {
-                                let _ = send_message(stream, UpdatePeerName(server, peer, None));
+                            if peer != self.id {
+                                if let Some(ref mut stream) = self.frontend_stream {
+                                    let _ =
+                                        send_message(stream, UpdatePeerName(server, peer, None));
+                                }
                             }
                         }
                     }
@@ -128,11 +131,11 @@ impl Network {
             }
             if waiting_for_ack_session.2.is_empty() {
                 let message = self.messages_waiting_for_ack.remove(&session);
-                println!(
+                /*println!(
                     "received full ack! session: {}, message: {:?}",
                     session,
                     message.clone()
-                );
+                );*/
                 let server = waiting_for_ack_session.0;
                 let recipient = waiting_for_ack_session.1;
                 if let Some(ref mut stream) = &mut self.frontend_stream {
