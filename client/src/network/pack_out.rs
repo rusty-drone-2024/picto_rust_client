@@ -9,8 +9,10 @@ use wg_2024::packet::{FloodRequest, NodeType, Packet, PacketType};
 impl Network {
     pub fn initiate_flood(&mut self) {
         //construct flood request packet
+        let mut routing = Routing::empty_route();
+        routing.hop_index = 1;
         let packet = Packet::new_flood_request(
-            Routing::empty_route(),
+            routing,
             0,
             FloodRequest::initialize(self.current_session, self.id, NodeType::Client),
         );
@@ -46,6 +48,7 @@ impl Network {
         let frags = message.clone().into_fragments();
         //try to find existing path
         let mut routing = Routing::empty_route();
+        routing.hop_index = 1;
         let mut send_now = false;
         let path = self.paths_to_leafs.get(&target);
         if let Some(Some(path)) = path {
