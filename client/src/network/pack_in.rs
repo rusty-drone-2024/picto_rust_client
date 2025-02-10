@@ -125,8 +125,12 @@ impl Network {
                 waiting_for_ack_session.2.remove(i);
             }
             if waiting_for_ack_session.2.is_empty() {
-                println!("session completely acked: {}", session);
                 let message = self.messages_waiting_for_ack.remove(&session);
+                println!(
+                    "session completely acked: {}, message: {:?}",
+                    session,
+                    message.clone()
+                );
                 let server = waiting_for_ack_session.0;
                 let recipient = waiting_for_ack_session.1;
                 if let Some(ref mut stream) = &mut self.frontend_stream {
