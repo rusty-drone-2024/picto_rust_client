@@ -3,7 +3,9 @@ use crate::state::NameSetAction::*;
 use crate::state::{ChatMessage, TUIState};
 use client_lib::communication::MessageContent::TextMessage;
 use client_lib::communication::MessageStatus::SentToServer;
-use client_lib::communication::TUIEvent::{DeleteMessage, RegisterToServer, SendMessage, SetName};
+use client_lib::communication::TUIEvent::{
+    DeleteMessage, RegisterToServer, RequestRoomList, SendMessage, SetName,
+};
 use client_lib::communication::{send_message, ChatClientID, ChatServerID};
 use client_lib::ClientError;
 use rand::Rng;
@@ -137,6 +139,7 @@ fn handle_room_select_event(
                 KeyCode::Enter => {
                     if let Some(r_id) = state.ui_data.selected_room {
                         let room = &state.chat_data.chat_rooms[r_id];
+                        let _ = send_message(stream, RequestRoomList(room.id));
                         if room.registered_to {
                             if let Some(curr_room_id) = &state.ui_data.current_room {
                                 if r_id != *curr_room_id {

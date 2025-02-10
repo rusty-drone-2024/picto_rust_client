@@ -7,6 +7,9 @@ use client_lib::communication::TUICommand::{
 use client_lib::communication::{send_message, MessageStatus, TUICommand};
 use common_structs::message::{Message, ServerType};
 use common_structs::types::{Routing, Session};
+use std::thread;
+use std::thread::sleep;
+use std::time::Duration;
 use wg_2024::packet::NodeType::{Client, Server};
 use wg_2024::packet::{
     Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
@@ -125,6 +128,11 @@ impl Network {
             }
             if waiting_for_ack_session.2.is_empty() {
                 let message = self.messages_waiting_for_ack.remove(&session);
+                println!(
+                    "received full ack! session: {}, message: {:?}",
+                    session,
+                    message.clone()
+                );
                 let server = waiting_for_ack_session.0;
                 let recipient = waiting_for_ack_session.1;
                 if let Some(ref mut stream) = &mut self.frontend_stream {
@@ -142,6 +150,7 @@ impl Network {
                     if let Some(Message::ReqChatRegistration) = message {
                         let _ =
                             send_message(stream, UpdateChatRoom(server, Some(true), Some(true)));
+                        self.send_message(Message::ReqChatClients, server, None);
                     }
                 }
             } else {
