@@ -110,7 +110,6 @@ impl Network {
         self.send_packet(ack, &sender, None);
     }
     fn handle_ack_receive(&mut self, session: Session, ack: Ack) {
-        println!("session: {}, ack received: {:?}", session, ack);
         let waiting_for_ack_session = self.packs_waiting_for_ack.remove(&session);
         if let Some(mut waiting_for_ack_session) = waiting_for_ack_session {
             let mut remove = None;
@@ -126,11 +125,6 @@ impl Network {
             }
             if waiting_for_ack_session.2.is_empty() {
                 let message = self.messages_waiting_for_ack.remove(&session);
-                println!(
-                    "session completely acked: {}, message: {:?}",
-                    session,
-                    message.clone()
-                );
                 let server = waiting_for_ack_session.0;
                 let recipient = waiting_for_ack_session.1;
                 if let Some(ref mut stream) = &mut self.frontend_stream {
@@ -144,12 +138,10 @@ impl Network {
                                 MessageStatus::ReceivedByServer,
                             ),
                         );
-                        if let Some(Message::ReqChatRegistration) = message {
-                            let _ = send_message(
-                                stream,
-                                UpdateChatRoom(server, Some(true), Some(true)),
-                            );
-                        }
+                    }
+                    if let Some(Message::ReqChatRegistration) = message {
+                        let _ =
+                            send_message(stream, UpdateChatRoom(server, Some(true), Some(true)));
                     }
                 }
             } else {
