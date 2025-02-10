@@ -20,10 +20,12 @@ impl Network {
                     }
                 }
                 pack.routing_header = routing;
-                let first_hop = pack.routing_header.hops[1];
-                let sender = self.packet_send.get(&first_hop);
-                if let Some(sender) = sender {
-                    self.send_packet(pack, &sender.clone(), packs.0);
+                let first_hop = pack.routing_header.hops.first();
+                if let Some(first_hop) = first_hop {
+                    let sender = self.packet_send.get(first_hop);
+                    if let Some(sender) = sender {
+                        self.send_packet(pack, &sender.clone(), packs.0);
+                    }
                 }
             }
         }

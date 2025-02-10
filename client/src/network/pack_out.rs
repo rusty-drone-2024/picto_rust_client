@@ -27,18 +27,23 @@ impl Network {
         }
     }
     pub fn send_message(&mut self, message: Message, target: NodeId, session: Option<Session>) {
+        // if is ReqChatSend, it's from the TUI. handle case separately.
         let session = if let Some(session) = session {
             session
         } else {
             self.current_session
         };
+        //starts sending message //TODO: adjust common
         self.messages_waiting_for_ack
             .insert(session, message.clone());
+        // if ReqChatSend set recipient to some(ClientId)
         let recipient = match message {
             Message::ReqChatSend { to: recipient, .. } => Some(recipient),
             _ => None,
         };
+        //fragment message
         let frags = message.into_fragments();
+        //try to find existing path
         let mut send_now = false;
         let mut routing = Routing::empty_route();
         let path = self.paths_to_leafs.get(&target);
@@ -46,8 +51,11 @@ impl Network {
             routing = Routing::new(path.clone(), 1);
             send_now = true;
         }
+        //queue all fragments with routes set if discovered, empty otherwise
         for frag in frags {
+            //build packet from fragment
             let pack = Packet::new_fragment(routing.clone(), session, frag.clone());
+            //queue fragment
             let queue_data = self.queued_packs.remove(&target);
             if let Some(queue_data) = queue_data {
                 let mut queue = queue_data.1;
@@ -57,8 +65,11 @@ impl Network {
                 self.queued_packs.insert(target, (recipient, vec![pack]));
             }
         }
+        //if there's a route, send packets
         if send_now {
             self.check_queued(target);
+        } else {
+            self.initiate_flood();
         }
 
         self.current_session += 1;
@@ -74,7 +85,6 @@ impl Network {
         if send_res.is_err() {
             match &pack.pack_type {
                 PacketType::MsgFragment(_) => {
-                    let pack = pack.clone();
                     let leaf = *pack.routing_header.hops.last().unwrap();
                     let queue_data = self.queued_packs.remove(&leaf);
                     if let Some(queue_data) = queue_data {
@@ -89,7 +99,7 @@ impl Network {
                     //do nothing
                 }
                 _ => {
-                    self.controller_shortcut(pack.clone());
+                    self.controller_shortcut(pack);
                 }
             }
         } else {

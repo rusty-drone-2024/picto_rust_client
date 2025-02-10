@@ -18,9 +18,13 @@ pub(super) struct Network {
     pub packet_send: HashMap<NodeId, Sender<Packet>>,
     controller_send: Sender<LeafEvent>,
     topology: DiGraphMap<NodeId, i32>,
+    //HM<session, (serverId, OtherClientId, Waiting)>
     packs_waiting_for_ack: HashMap<u64, (NodeId, Option<NodeId>, Vec<Packet>)>,
+    //HM<session, message>
     pub messages_waiting_for_ack: HashMap<u64, Message>,
+    //HM<serverId, (OtherClientId, Waiting)>
     queued_packs: HashMap<NodeId, (Option<NodeId>, Vec<Packet>)>,
+    //HM<serverId (Path)>
     paths_to_leafs: HashMap<NodeId, Option<Vec<NodeId>>>,
     leaf_types: HashMap<NodeId, Option<ServerType>>,
     partially_received: HashMap<u64, Vec<Option<Fragment>>>,

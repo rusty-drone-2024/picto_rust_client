@@ -41,7 +41,7 @@ fn handle_tui_event(
     let mut state = state.lock().map_err(|_| LockError)?;
     match event {
         SetName(s) => {
-            //TODO: send new name to server;
+            //TODO: send new name to each known peer;
             send_message(stream, UpdateName(s))?;
         }
         RegisterToServer(cr) => {
