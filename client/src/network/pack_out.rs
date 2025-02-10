@@ -71,13 +71,13 @@ impl Network {
         }
         //if there's a route, send packets
         if send_now {
-            println!("sending now to {}: {:?}", target, message);
+            //println!("sending now to {}: {:?}", target, message);
             self.check_queued(target);
         } else {
-            println!(
+            /*println!(
                 "sending later: non existing route to {}, {:?}",
                 target, message
-            );
+            );*/
             self.initiate_flood();
         }
 

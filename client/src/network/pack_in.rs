@@ -25,7 +25,7 @@ impl Network {
         }
     }
     fn handle_fragment_receive(&mut self, routing: Routing, session: Session, fragment: Fragment) {
-        println!("storing: {:?}", fragment);
+        //println!("storing: {:?}", fragment);
         let mut partial_message = Vec::with_capacity(fragment.total_n_fragments as usize);
 
         if let Some(stored_partial_message) = self.partially_received.remove(&session) {
@@ -45,13 +45,13 @@ impl Network {
         }
 
         if complete {
-            println!("message complete");
+            //println!("message complete");
             let mut message = Vec::new();
             for frag in partial_message.iter().flatten() {
                 message.push(frag.clone());
             }
             let message = Message::from_fragments(message);
-            println!("completed message: {:?}", message.clone());
+            //println!("completed message: {:?}", message.clone());
             //if message makes sense
             if let Ok(message) = message {
                 match message {
@@ -211,7 +211,7 @@ impl Network {
                 Server => {
                     let server_known = self.leaf_types.get(&id);
                     if server_known.is_none() {
-                        println!("new server detected: {}", id);
+                        //println!("new server detected: {}", id);
                         self.leaf_types.insert(id, None);
                         self.paths_to_leafs.insert(id, None);
                         try_server_type_discovery = true;
@@ -222,7 +222,7 @@ impl Network {
 
             self.update_unreachable_paths();
             if try_server_type_discovery {
-                println!("try to discover {} server type", id);
+                //println!("try to discover {} server type", id);
                 self.send_message(Message::ReqServerType, id, None);
             }
             self.check_queued(id);

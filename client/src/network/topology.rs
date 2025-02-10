@@ -25,11 +25,11 @@ impl Network {
                 if let Some((_, path)) = path {
                     //could be different so if there's still one add it
                     self.paths_to_leafs.insert(leaf, Some(path));
-                    println!("updated path to {}", leaf);
+                    //println!("updated path to {}", leaf);
                 } else {
                     //remove path from leaf and flood
                     self.paths_to_leafs.insert(leaf, None);
-                    println!("flood: removed route to {}", leaf);
+                    //println!("flood: removed route to {}", leaf);
                     self.initiate_flood();
                 }
             }
@@ -47,7 +47,7 @@ impl Network {
         for leaf in leafs {
             //if there's no known valid path to the leaf
             if let Some(None) = self.paths_to_leafs.get(&leaf) {
-                println!("trying to discover new paths to {}", leaf);
+                //println!("trying to discover new paths to {}", leaf);
                 //try to find one
                 let path = astar(
                     &self.topology,
@@ -59,7 +59,7 @@ impl Network {
                 //if found add path to known paths and try sending any queued messages for that leaf
                 if let Some((_, path)) = path {
                     self.paths_to_leafs.insert(leaf, Some(path.clone()));
-                    println!("new path to {}: {:?}", leaf, path);
+                    //println!("new path to {}: {:?}", leaf, path);
                     self.check_queued(leaf);
                 }
             }
@@ -82,7 +82,7 @@ impl Network {
             if i != 0 && !(is_last_leaf && i == last_index) {
                 self.topology.add_edge(b, a, 1);
             }
-            println!("topology: {:?}", self.topology);
+            //println!("topology: {:?}", self.topology);
         }
 
         Ok(())

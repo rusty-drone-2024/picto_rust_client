@@ -20,7 +20,7 @@ pub(crate) fn new_listener() -> Result<TcpListener, ClientError> {
             return Err(ListenerError);
         }
     };
-    println!("CLIENT port: {}", listener_port.port());
+    //println!("CLIENT port: {}", listener_port.port());
 
     Ok(listener)
 }

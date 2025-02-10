@@ -15,18 +15,18 @@ pub(crate) fn tui_event_receiver(state: Arc<Mutex<Network>>, mut stream: TcpStre
     loop {
         match receive_message::<TUIEvent>(&mut stream) {
             Ok(event) => {
-                println!("Backend: received event: {:?}", event);
+                //println!("Backend: received event: {:?}", event);
                 match handle_tui_event(&state, &mut stream, event) {
                     Ok(_) => {
-                        println!("Event handled correctly")
+                        //println!("Event handled correctly")
                     }
                     Err(_) => {
-                        println!("Error in event handling")
+                        //println!("Error in event handling")
                     }
                 };
             }
             Err(e) => {
-                println!("Backend: Error reading event: {:?}", e);
+                //println!("Backend: Error reading event: {:?}", e);
                 break;
             }
         }
