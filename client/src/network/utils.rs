@@ -13,11 +13,9 @@ impl Network {
         if let Some(packs) = packs {
             for mut pack in packs.1 {
                 let mut routing = pack.routing_header;
-                if routing.is_empty() {
-                    let route = self.paths_to_leafs.get(&leaf);
-                    if let Some(Some(route)) = route {
-                        routing = SourceRoutingHeader::new(route.clone(), 1);
-                    }
+                let route = self.paths_to_leafs.get(&leaf);
+                if let Some(Some(route)) = route {
+                    routing = SourceRoutingHeader::new(route.clone(), 1);
                 }
                 pack.routing_header = routing;
                 let first_hop = pack.routing_header.hops.first();

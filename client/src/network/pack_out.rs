@@ -45,16 +45,14 @@ impl Network {
         let frags = message.into_fragments();
         //try to find existing path
         let mut send_now = false;
-        let mut routing = Routing::empty_route();
         let path = self.paths_to_leafs.get(&target);
         if let Some(Some(path)) = path {
-            routing = Routing::new(path.clone(), 1);
             send_now = true;
         }
         //queue all fragments with routes set if discovered, empty otherwise
         for frag in frags {
             //build packet from fragment
-            let pack = Packet::new_fragment(routing.clone(), session, frag.clone());
+            let pack = Packet::new_fragment(Routing::empty_route(), session, frag.clone());
             //queue fragment
             let queue_data = self.queued_packs.remove(&target);
             if let Some(queue_data) = queue_data {
