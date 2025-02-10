@@ -179,6 +179,7 @@ impl Network {
     }
     fn handle_flood_response_receive(&mut self, flood_response: FloodResponse) {
         let last = flood_response.path_trace.last().copied();
+        let mut try_server_type_discovery = false;
         if let Some((id, node_type)) = last {
             let path = flood_response
                 .path_trace
@@ -194,17 +195,20 @@ impl Network {
                     return;
                 }
                 Server => {
-                    self.leaf_types.insert(id, None);
-                    self.paths_to_leafs.insert(id, None);
-                    self.update_unreachable_paths();
-                    if let Some(stream) = &mut self.frontend_stream {
-                        let _ = send_message(stream, UpdateChatRoom(id, None, Some(true)));
+                    let server_known = self.leaf_types.get(&id);
+                    if server_known.is_none() {
+                        println!("new server detected: {}", id);
+                        self.leaf_types.insert(id, None);
+                        self.paths_to_leafs.insert(id, None);
+                        try_server_type_discovery = true;
                     }
+                    let _ = self.add_path(&path, true);
                 }
             }
 
-            let _ = self.add_path(&path, true);
-            if node_type == Server {
+            self.update_unreachable_paths();
+            if try_server_type_discovery {
+                println!("try to discover {} server type", id);
                 self.send_message(Message::ReqServerType, id, None);
             }
             self.check_queued(id);

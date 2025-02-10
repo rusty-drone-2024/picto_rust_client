@@ -21,6 +21,7 @@ impl Network {
         for sender in self.packet_send.values() {
             senders.push(sender.clone());
         }
+
         //send flood request
         for sender in senders {
             self.send_packet(packet.clone(), &sender, None);
@@ -42,17 +43,19 @@ impl Network {
             _ => None,
         };
         //fragment message
-        let frags = message.into_fragments();
+        let frags = message.clone().into_fragments();
         //try to find existing path
+        let mut routing = Routing::empty_route();
         let mut send_now = false;
         let path = self.paths_to_leafs.get(&target);
         if let Some(Some(path)) = path {
             send_now = true;
+            routing = Routing::new(path.clone(), 1);
         }
         //queue all fragments with routes set if discovered, empty otherwise
         for frag in frags {
             //build packet from fragment
-            let pack = Packet::new_fragment(Routing::empty_route(), session, frag.clone());
+            let pack = Packet::new_fragment(routing.clone(), session, frag.clone());
             //queue fragment
             let queue_data = self.queued_packs.remove(&target);
             if let Some(queue_data) = queue_data {
@@ -65,8 +68,13 @@ impl Network {
         }
         //if there's a route, send packets
         if send_now {
+            println!("sending now to {}: {:?}", target, message);
             self.check_queued(target);
         } else {
+            println!(
+                "sending later: non existing route to {}, {:?}",
+                target, message
+            );
             self.initiate_flood();
         }
 

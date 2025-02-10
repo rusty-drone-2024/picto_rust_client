@@ -12,13 +12,13 @@ impl Network {
         let packs = self.queued_packs.remove(&leaf);
         if let Some(packs) = packs {
             for mut pack in packs.1 {
-                let mut routing = pack.routing_header;
+                let mut routing = pack.routing_header.clone();
                 let route = self.paths_to_leafs.get(&leaf);
                 if let Some(Some(route)) = route {
                     routing = SourceRoutingHeader::new(route.clone(), 1);
                 }
                 pack.routing_header = routing;
-                let first_hop = pack.routing_header.hops.first();
+                let first_hop = pack.routing_header.hops.get(1);
                 if let Some(first_hop) = first_hop {
                     let sender = self.packet_send.get(first_hop);
                     if let Some(sender) = sender {
